@@ -1,4 +1,4 @@
-# Testing: no bullshit
+# Testing: honest claims only
 
 Unto Caesar must never claim it can do something it can't. Every claim in the README, the docs or the app has a test behind it, and the results are public in this repo.
 
