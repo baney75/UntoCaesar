@@ -1,0 +1,21 @@
+# UntoCaesar
+
+> Open-source tax filing on local AI, for individuals, businesses and volunteer sites. Status: planned, not released; check SUPPORTED.md before doing any step.
+
+Cloud providers are personal use only and live only in Fonsviva. Apps never hold provider keys. UntoCaesar client work and UniCerebrum are blocked from cloud.
+
+## Setup
+- [For agents: quickstart](https://baney75.github.io/UntoCaesar/agents): rules and order of steps
+- [Install](https://baney75.github.io/UntoCaesar/setup/install): steps, checks, expected output
+- [Connect to Fonsviva](https://baney75.github.io/UntoCaesar/setup/connect-fonsviva)
+- [Select models](https://baney75.github.io/UntoCaesar/setup/select-models)
+- [Add a cloud provider](https://baney75.github.io/UntoCaesar/setup/add-cloud-provider)
+- [Troubleshoot](https://baney75.github.io/UntoCaesar/setup/troubleshoot)
+
+## Project
+- [AGENTS.md](https://github.com/baney75/UntoCaesar/blob/main/AGENTS.md): rules for agents working on the code
+- [SUPPORTED.md](https://github.com/baney75/UntoCaesar/blob/main/SUPPORTED.md): what works today
+- [TESTING.md](https://github.com/baney75/UntoCaesar/blob/main/TESTING.md): how claims are proven
+
+## Related
+- [Fonsviva](https://baney75.github.io/Fonsviva/llms.txt): the shared compute layer UntoCaesar runs on

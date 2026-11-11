@@ -18,6 +18,20 @@ Open-source tax filing on safe, trusted local AI. It is for individuals, familie
 - **Tax accuracy is the product.** Tax rules belong in skills and tested code, never in model guesses. Cite the official source (IRS, state, local) for every rule.
 - **A human signs.** The app prepares returns; a person reviews and submits them.
 
+## Install and setup (for agents setting this up for a person)
+
+> **Status: planned, not released.** UntoCaesar has no release yet, so there is nothing to install today. These steps are the target behavior. Each one becomes true only when its test in [TESTING.md](https://github.com/baney75/UntoCaesar/blob/main/TESTING.md) passes, and [SUPPORTED.md](https://github.com/baney75/UntoCaesar/blob/main/SUPPORTED.md) is the source of truth for what works now. An agent must check SUPPORTED.md first and tell the person plainly if a step isn't supported yet.
+
+Follow [docs/agents.md](docs/agents.md) ([web](https://baney75.github.io/UntoCaesar/agents)). In short:
+
+1. **Install:** [docs/setup/install.md](docs/setup/install.md). Check: `fonsviva status` prints `Fonsviva <version> running at http://127.0.0.1:7341`.
+2. **Connect to Fonsviva:** [docs/setup/connect-fonsviva.md](docs/setup/connect-fonsviva.md). Check: `fonsviva keys list` shows `untocaesar` as `active`.
+3. **Select models:** [docs/setup/select-models.md](docs/setup/select-models.md). Check: `fonsviva models list --app untocaesar` shows the chosen models with gates `pass`.
+4. **Cloud (optional, personal only):** [docs/setup/add-cloud-provider.md](docs/setup/add-cloud-provider.md). Only in Fonsviva. Ask the person first.
+5. **If anything fails:** [docs/setup/troubleshoot.md](docs/setup/troubleshoot.md) and `fonsviva doctor`.
+
+Ask before installing anything or spending money, never print keys, and never try to get around the cloud block. Machine-readable index: [llms.txt](llms.txt).
+
 ## Skills
 
 Skills live in `skills/maintainer/` (for building this project) and `skills/runtime/` (used by agents inside the app). All are original and tested; see `skills/README.md`. Load the skill that matches your task before starting, and improve it when you learn something.

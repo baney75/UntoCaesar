@@ -31,6 +31,12 @@ Unto Caesar is an arrangement of standardized skills and solid code bundled behi
 
 US federal and state returns come first. The long-term goal is global.
 
+## Setup
+
+Unto Caesar runs on [Fonsviva](https://github.com/baney75/Fonsviva), the shared local compute layer. If Fonsviva is already installed, Unto Caesar uses it and you pick models inside the app. If not, the app installs it for you and walks you through setup. Cloud providers are set up only in Fonsviva, for personal use only.
+
+Agents setting this up for someone: start at [docs/agents.md](docs/agents.md) or [llms.txt](llms.txt). Site: https://baney75.github.io/UntoCaesar/
+
 ## Status
 
 Early planning. Contributions and ideas are welcome.
