@@ -10,13 +10,20 @@ Unto Caesar is an open-source tax filing app that runs on local AI. A person, a 
 - **Service providers** such as universities, VITA-style volunteer sites, and community hubs that help many people file.
 - **Businesses** handling their own filings.
 
-## What it does
+## What it will do (planned)
 
-- Guides the user through their return in an extremely easy GUI.
+Nothing below is built yet. See [SUPPORTED.md](SUPPORTED.md) for what works today.
+
+
+- Guides the user through their return in an easy GUI.
 - Reads tax documents (W-2s, 1099s, receipts) and fills in the return.
 - Finds deductions and credits the user qualifies for and explains why.
 - Checks the return for errors and missing items before it's finished.
 - Runs entirely on local models that are safe, reputable and trusted. No tax data leaves the machine.
+
+## First version
+
+A federal Form 1040 for W-2 filers, prepared for the person to review and file. The tax math comes from the IRS's open-source [Fact Graph](https://github.com/IRS-Public/fact-graph) or our own tested code, checked against known-correct returns. The local model reads documents and explains, but it never does the math. Businesses, state returns and e-file come later.
 
 ## How it's built
 
@@ -29,7 +36,7 @@ Unto Caesar is an arrangement of standardized skills and solid code bundled behi
 
 ## Scope
 
-US federal and state returns come first. The long-term goal is global.
+US federal returns come first, then state returns.
 
 ## Setup
 

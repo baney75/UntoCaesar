@@ -4,7 +4,7 @@ Instructions for AI coding agents (Claude Code, Codex, Cursor and others) workin
 
 ## What this project is
 
-Open-source tax filing on safe, trusted local AI. It is for individuals, families, small and large businesses, and volunteers or institutions (universities, community hubs) filing for others. It runs as a desktop app, a self-hosted site with no GUI, or across shared compute nodes, and it prepares returns, finds deductions, tracks local, state and federal deadlines, and keeps everything encrypted.
+Open-source tax filing on safe, trusted local AI. It is for individuals, families, small and large businesses, and volunteers or institutions (universities, community hubs) filing for others. It starts as a desktop app that prepares a federal 1040 for W-2 filers, with the math in the IRS Fact Graph or tested code. Later it adds state returns, more forms, volunteer sites and deadline tracking. Everything stays encrypted.
 
 ## Ground rules
 
@@ -34,7 +34,7 @@ Ask before installing anything or spending money, never print keys, and never tr
 
 ## Skills
 
-Skills live in `skills/maintainer/` (for building this project) and `skills/runtime/` (used by agents inside the app). All are original and tested; see `skills/README.md`. Load the skill that matches your task before starting, and improve it when you learn something.
+Skills live in `skills/maintainer/` (for building this project) and `skills/runtime/` (used by agents inside the app). None exist yet. Each one must be original and tested before it merges; see `skills/README.md`. Load the skill that matches your task before starting, and improve it when you learn something.
 
 ## Testing and honesty
 
