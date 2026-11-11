@@ -20,7 +20,11 @@ Open-source tax filing on safe, trusted local AI. It is for individuals, familie
 
 ## Skills
 
-Reusable agent skills live in `skills/`. Each skill follows the standard in `skills/README.md`. Load the skill that matches your task before starting, and improve it when you learn something.
+Skills live in `skills/maintainer/` (for building this project) and `skills/runtime/` (used by agents inside the app). All are original and tested; see `skills/README.md`. Load the skill that matches your task before starting, and improve it when you learn something.
+
+## Testing and honesty
+
+Never claim the software can do something without a passing test. Follow `TESTING.md`, keep `SUPPORTED.md` honest, and benchmark models per `BENCHMARKS.md`. Model-specific instructions live in `models/<model>/`.
 
 ## Releases
 
@@ -32,4 +36,9 @@ Unto Caesar ships on two channels, Nightly and Stable. See `RELEASES.md`. Never 
 - `CLAUDE.md`: Claude Code entry point, points here
 - `DESIGN.md`: design system and UX rules, owned by the designer
 - `RELEASES.md`: Nightly and Stable channels
-- `skills/`: standardized agent skills
+- `CONTRIBUTING.md`: how to contribute, including design work and coauthorship
+- `TESTING.md`, `SUPPORTED.md`, `BENCHMARKS.md`: accuracy, honest scope and model benchmarks
+- `skills/maintainer/`, `skills/runtime/`: original, tested skills
+- `models/`: per-model instructions
+- `tests/`, `benchmarks/results/`: tests and published results
+- `design/`: design exports and notes
