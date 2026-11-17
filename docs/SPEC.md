@@ -66,7 +66,7 @@ What the plugin API lacks, filed as an issue on baney75/local-studio:
 1. `local_only`: a manifest flag that makes the core refuse to run the plugin's commands in a session whose provider is not local (Fonsviva or the local fleet), and turns off web tools in that session. Without it, the skill can only ask, which is not enough for tax records.
 2. A way for the plugin to know the session's tier (S, M or L), so the right tier card loads without the person setting `CAESAR_TIER`.
 
-Until `local_only` lands, `caesar` refuses to start unless `CAESAR_LOCAL_ONLY_ACK=1` is set by the skill after it has checked the provider name, and the plugin is labeled dev only.
+Until `local_only` lands, `caesar` refuses to start unless `CAESAR_LOCAL_ONLY_ACK=1` is set by the skill after it has checked the provider name, and the plugin is labeled dev only. Tier L means the largest local models, never a cloud model: a person's tax figures never reach a cloud provider at any tier. Frontier cloud models appear only as rivals in the win check below, on synthetic cases.
 
 ## What runs locally
 
@@ -86,7 +86,7 @@ Known answers come from three places, in order of trust: (1) IRS training materi
 
 The model runs `/taxes` against the simulated person, reads the documents and writes the facts; `caesar` computes. Each case runs 10 times per model.
 
-| Measure | S (about 3B and under) | M (about 4B to 30B) | L (frontier) |
+| Measure | S (about 3B and under) | M (about 4B to 30B) | L (the largest local models, over 30B) |
 | --- | --- | --- | --- |
 | Cases in the suite | W-2 only (12 cases) | W-2 plus Schedule C and SE (24 cases) | all v0 cases (30) |
 | Runs that end with the exact correct return | 8 of 10 per case | 9 of 10 per case | 10 of 10 per case |

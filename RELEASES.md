@@ -19,6 +19,7 @@ Unto Caesar ships as a Local Studio plugin from a git tree, so each channel is a
 
 ## Update rules
 
+- Every install and update is verified before it runs: the Local Studio catalog pins each channel to a commit and a SHA-256 tree hash, and the core refuses a tree that does not match (local-studio plugin catalog, `docs/channels.md`).
 - User data is backed up before every update, and migrations are reversible.
 - Every update can be rolled back to the previous version.
 - What changed is shown in plain words before updating.
