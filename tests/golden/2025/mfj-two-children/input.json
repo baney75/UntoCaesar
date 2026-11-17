@@ -1,0 +1,217 @@
+{
+  "input": {
+    "return_header": {
+      "tax_year": 2025,
+      "synthetic": true
+    },
+    "return_data": {
+      "irs1040": {
+        "filing_status": {
+          "label": "Confirm your filing status for 2025",
+          "value": "married_jointly"
+        },
+        "tp_first_name": {
+          "label": "First name",
+          "value": "Test"
+        },
+        "tp_last_name": {
+          "label": "Last name",
+          "value": "Person"
+        },
+        "tp_date_of_birth": {
+          "label": "Date of birth",
+          "value": "1985-06-15"
+        },
+        "tp_blind": {
+          "label": "Are you legally blind?",
+          "value": false
+        },
+        "tp_dependent": {
+          "label": "Can someone claim you as a dependent?",
+          "value": false
+        },
+        "dependent_detail": [
+          {
+            "dependent_first_name": "Ava",
+            "dependent_last_name": "Example",
+            "dependent_date_of_birth": "2015-04-10",
+            "dependent_months_lived": 12,
+            "dependent_relationship": "daughter",
+            "dependent_us_citizen_national_or_resident_alien": true,
+            "dependent_ssn": "000000000"
+          },
+          {
+            "dependent_first_name": "Ben",
+            "dependent_last_name": "Example",
+            "dependent_date_of_birth": "2018-09-01",
+            "dependent_months_lived": 12,
+            "dependent_relationship": "son",
+            "dependent_us_citizen_national_or_resident_alien": true,
+            "dependent_ssn": "000000000"
+          }
+        ],
+        "estimated_tax_payment_1": {
+          "label": "Quarter 1",
+          "value": 0.0
+        },
+        "estimated_tax_payment_2": {
+          "label": "Quarter 2",
+          "value": 0.0
+        },
+        "estimated_tax_payment_3": {
+          "label": "Quarter 3",
+          "value": 0.0
+        },
+        "estimated_tax_payment_4": {
+          "label": "Quarter 4",
+          "value": 0.0
+        },
+        "applied_from_prior_year": {
+          "label": "Prior year refund applied",
+          "value": 0
+        },
+        "sp_first_name": {
+          "label": "Spouse first name",
+          "value": "Test"
+        },
+        "sp_last_name": {
+          "label": "Spouse last name",
+          "value": "Spouse"
+        },
+        "sp_date_of_birth": {
+          "label": "Spouse date of birth",
+          "value": "1987-02-03"
+        },
+        "sp_blind": {
+          "label": "Is your spouse legally blind?",
+          "value": false
+        },
+        "sp_dependent": {
+          "label": "Can someone claim your spouse as a dependent?",
+          "value": false
+        }
+      },
+      "has_ssn": {
+        "label": "Do you have a Social Security Number?",
+        "value": true
+      },
+      "w2": [
+        {
+          "who_applies_to": {
+            "label": "Whose W-2 is this?",
+            "value": "taxpayer"
+          },
+          "employer_name": {
+            "label": "Employer's name",
+            "value": "Harbor Logistics"
+          },
+          "wages": {
+            "label": "Box 1",
+            "value": 48000
+          },
+          "withholding": {
+            "label": "Box 2",
+            "value": 1500
+          },
+          "social_security_wages": {
+            "label": "Box 3",
+            "value": 48000
+          },
+          "social_security_tax": {
+            "label": "Box 4",
+            "value": 2976
+          },
+          "medicare_wages_and_tips": {
+            "label": "Box 5",
+            "value": 48000
+          },
+          "medicare_tax_withheld": {
+            "label": "Box 6",
+            "value": 696
+          },
+          "social_security_tips": {
+            "label": "Box 7",
+            "value": 0
+          },
+          "allocated_tips": {
+            "label": "Box 8",
+            "value": 0
+          },
+          "dependent_care_benefits": {
+            "label": "Box 10",
+            "value": 0
+          },
+          "statutory_employee": {
+            "label": "Box 13 statutory employee",
+            "value": false
+          }
+        },
+        {
+          "who_applies_to": {
+            "label": "Whose W-2 is this?",
+            "value": "spouse"
+          },
+          "employer_name": {
+            "label": "Employer's name",
+            "value": "Maple School District"
+          },
+          "wages": {
+            "label": "Box 1",
+            "value": 18000
+          },
+          "withholding": {
+            "label": "Box 2",
+            "value": 1200
+          },
+          "social_security_wages": {
+            "label": "Box 3",
+            "value": 18000
+          },
+          "social_security_tax": {
+            "label": "Box 4",
+            "value": 1116
+          },
+          "medicare_wages_and_tips": {
+            "label": "Box 5",
+            "value": 18000
+          },
+          "medicare_tax_withheld": {
+            "label": "Box 6",
+            "value": 261
+          },
+          "social_security_tips": {
+            "label": "Box 7",
+            "value": 0
+          },
+          "allocated_tips": {
+            "label": "Box 8",
+            "value": 0
+          },
+          "dependent_care_benefits": {
+            "label": "Box 10",
+            "value": 0
+          },
+          "statutory_employee": {
+            "label": "Box 13 statutory employee",
+            "value": false
+          }
+        }
+      ],
+      "irs1040_scheduleb": {
+        "irs1099_int": [],
+        "irs1099_div": []
+      },
+      "irs1040_schedule1": {
+        "irs1099_g": []
+      },
+      "irs1040_schedulec": []
+    }
+  },
+  "untocaesar": {
+    "anchors": [
+      "i1040 2025, Tax Table, pages 68 to 79 (row looked up from the IRS PDF): married filing jointly, $34,500 to $34,550 is $3,666",
+      "Schedule 8812 (2025) lines 1 to 27 and its instructions, Credit Limit Worksheet A and Earned Income Worksheet",
+      "i1040 2025 Line 27a EIC Step 1: line 11b of $66,000 is not under $64,430 for two children, so no EIC"
+    ]
+  }
+}

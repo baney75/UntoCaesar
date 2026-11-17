@@ -1,0 +1,147 @@
+{
+  "input": {
+    "return_header": {
+      "tax_year": 2025,
+      "synthetic": true
+    },
+    "return_data": {
+      "irs1040": {
+        "filing_status": {
+          "label": "Confirm your filing status for 2025",
+          "value": "head_of_household"
+        },
+        "tp_first_name": {
+          "label": "First name",
+          "value": "Test"
+        },
+        "tp_last_name": {
+          "label": "Last name",
+          "value": "Person"
+        },
+        "tp_date_of_birth": {
+          "label": "Date of birth",
+          "value": "1985-06-15"
+        },
+        "tp_blind": {
+          "label": "Are you legally blind?",
+          "value": true
+        },
+        "tp_dependent": {
+          "label": "Can someone claim you as a dependent?",
+          "value": false
+        },
+        "dependent_detail": [
+          {
+            "dependent_first_name": "Cal",
+            "dependent_last_name": "Example",
+            "dependent_date_of_birth": "2014-03-03",
+            "dependent_months_lived": 12,
+            "dependent_relationship": "son",
+            "dependent_us_citizen_national_or_resident_alien": true,
+            "dependent_ssn": "000000000"
+          },
+          {
+            "dependent_first_name": "Dora",
+            "dependent_last_name": "Example",
+            "dependent_date_of_birth": "1960-05-05",
+            "dependent_months_lived": 12,
+            "dependent_relationship": "mother",
+            "dependent_us_citizen_national_or_resident_alien": true,
+            "dependent_ssn": "000000000"
+          }
+        ],
+        "estimated_tax_payment_1": {
+          "label": "Quarter 1",
+          "value": 0.0
+        },
+        "estimated_tax_payment_2": {
+          "label": "Quarter 2",
+          "value": 0.0
+        },
+        "estimated_tax_payment_3": {
+          "label": "Quarter 3",
+          "value": 0.0
+        },
+        "estimated_tax_payment_4": {
+          "label": "Quarter 4",
+          "value": 0.0
+        },
+        "applied_from_prior_year": {
+          "label": "Prior year refund applied",
+          "value": 0
+        }
+      },
+      "has_ssn": {
+        "label": "Do you have a Social Security Number?",
+        "value": true
+      },
+      "w2": [
+        {
+          "who_applies_to": {
+            "label": "Whose W-2 is this?",
+            "value": "taxpayer"
+          },
+          "employer_name": {
+            "label": "Employer's name",
+            "value": "Riverside Clinic"
+          },
+          "wages": {
+            "label": "Box 1",
+            "value": 58000
+          },
+          "withholding": {
+            "label": "Box 2",
+            "value": 4100
+          },
+          "social_security_wages": {
+            "label": "Box 3",
+            "value": 58000
+          },
+          "social_security_tax": {
+            "label": "Box 4",
+            "value": 3596
+          },
+          "medicare_wages_and_tips": {
+            "label": "Box 5",
+            "value": 58000
+          },
+          "medicare_tax_withheld": {
+            "label": "Box 6",
+            "value": 841
+          },
+          "social_security_tips": {
+            "label": "Box 7",
+            "value": 0
+          },
+          "allocated_tips": {
+            "label": "Box 8",
+            "value": 0
+          },
+          "dependent_care_benefits": {
+            "label": "Box 10",
+            "value": 0
+          },
+          "statutory_employee": {
+            "label": "Box 13 statutory employee",
+            "value": false
+          }
+        }
+      ],
+      "irs1040_scheduleb": {
+        "irs1099_int": [],
+        "irs1099_div": []
+      },
+      "irs1040_schedule1": {
+        "irs1099_g": []
+      },
+      "irs1040_schedulec": []
+    }
+  },
+  "untocaesar": {
+    "anchors": [
+      "i1040 2025, Tax Table, pages 68 to 79 (row looked up from the IRS PDF): head of household, $32,350 to $32,400 is $3,545",
+      "i1040 2025 Standard Deduction Chart, page 35: head of household, one box, $25,625",
+      "Schedule 8812 (2025) lines 4 to 16a: $2,200 child tax credit and $500 credit for other dependents"
+    ]
+  }
+}

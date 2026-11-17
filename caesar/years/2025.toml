@@ -216,14 +216,6 @@ hoh = [[100000, 103350, "0.22", "6825.00"], [103350, 197300, "0.24", "8892.00"],
 src = "i1040"
 at = "2025 Tax Computation Worksheet, Line 16, Sections A to D, page 80"
 
-[figures.qualified_dividends_worksheet]
-zero_rate_top = { single = 48350, mfs = 48350, mfj = 96700, qss = 96700, hoh = 64750 }
-fifteen_rate_top = { single = 533400, mfs = 300000, mfj = 600050, qss = 600050, hoh = 566700 }
-fifteen_rate = "0.15"
-twenty_rate = "0.20"
-src = "i1040"
-at = "Qualified Dividends and Capital Gain Tax Worksheet, Line 16, lines 6, 13, 18 and 21, page 38"
-
 [figures.eic_screen]
 # Used only to detect that the earned income credit may apply, which v0 refuses.
 # Index is the number of qualifying children with valid SSNs (0, 1, 2, 3 or more).
@@ -231,7 +223,13 @@ agi_limit_mfj = [26214, 57554, 64430, 68675]
 agi_limit_other = [19104, 50434, 57310, 61555]
 investment_income_limit = 11950
 src = "i1040"
-at = "Lines 27a, 27b and 27c, Earned Income Credit, Step 1 question 1 and Step 2 question 2, page 40"
+at = "Lines 27a, 27b and 27c, Earned Income Credit: Step 1 questions 1 (line 11b limits) and 2 (valid SSN) and Step 2 question 2 (investment income), page 40; Step 4 question 2 (age 25 to 64 with no qualifying child), page 41; Step 5 question 3 (earned income limits), page 42"
+
+[figures.excess_social_security]
+# Used only to detect the Schedule 3 line 11 credit, which v0 refuses.
+amount = "10918.20"
+src = "i1040"
+at = "Schedule 3, Line 11, Excess Social Security and Tier 1 RRTA Tax Withheld: more than one employer, total wages over $176,100, credit for the amount withheld over $10,918.20, page 117"
 
 [figures.additional_medicare_screen]
 mfj = 250000
@@ -294,7 +292,7 @@ at = "Line 2b, page 25"
 
 [lines."1040.3a"]
 label = "Qualified dividends"
-rule = "Add box 1b of every Form 1099-DIV."
+rule = "Add box 1b of every Form 1099-DIV. v0 refuses any qualified dividends, because they need the Qualified Dividends and Capital Gain Tax Worksheet, so this line is always 0."
 src = "i1040"
 at = "Line 3a, page 25"
 
@@ -366,7 +364,7 @@ at = "line 15"
 
 [lines."1040.16"]
 label = "Tax"
-rule = "With qualified dividends, use the Qualified Dividends and Capital Gain Tax Worksheet. Otherwise use the Tax Table when line 15 is under $100,000, and the Tax Computation Worksheet when it is $100,000 or more."
+rule = "With no qualified dividends or capital gains, use the Tax Table when line 15 is under $100,000, and the Tax Computation Worksheet when it is $100,000 or more."
 src = "i1040"
 at = "Line 16, pages 34 to 36; Tax Table, pages 68 to 79; Tax Computation Worksheet, page 80"
 
@@ -945,156 +943,6 @@ label = "Qualified business income deduction"
 rule = "The smaller of line 10 or line 14."
 src = "f8995"
 at = "line 15"
-
-[lines."qdcg.1"]
-label = "Taxable income"
-rule = "Form 1040, line 15."
-src = "i1040"
-at = "Qualified Dividends and Capital Gain Tax Worksheet line 1, page 38"
-
-[lines."qdcg.2"]
-label = "Qualified dividends"
-rule = "Form 1040, line 3a."
-src = "i1040"
-at = "Qualified Dividends and Capital Gain Tax Worksheet line 2, page 38"
-
-[lines."qdcg.3"]
-label = "Capital gain"
-rule = "Form 1040, line 7a. Capital gains are outside v0, so this is 0."
-src = "i1040"
-at = "Qualified Dividends and Capital Gain Tax Worksheet line 3, page 38"
-
-[lines."qdcg.4"]
-label = "Line 2 plus line 3"
-rule = "Add lines 2 and 3."
-src = "i1040"
-at = "Qualified Dividends and Capital Gain Tax Worksheet line 4, page 38"
-
-[lines."qdcg.5"]
-label = "Ordinary taxable income"
-rule = "Line 1 minus line 4. If zero or less, enter 0."
-src = "i1040"
-at = "Qualified Dividends and Capital Gain Tax Worksheet line 5, page 38"
-
-[lines."qdcg.6"]
-label = "Top of the 0 percent range"
-rule = "$48,350 single or married filing separately, $96,700 joint or surviving spouse, $64,750 head of household."
-src = "i1040"
-at = "Qualified Dividends and Capital Gain Tax Worksheet line 6, page 38"
-
-[lines."qdcg.7"]
-label = "Smaller of line 1 or line 6"
-rule = "The smaller of line 1 or line 6."
-src = "i1040"
-at = "Qualified Dividends and Capital Gain Tax Worksheet line 7, page 38"
-
-[lines."qdcg.8"]
-label = "Smaller of line 5 or line 7"
-rule = "The smaller of line 5 or line 7."
-src = "i1040"
-at = "Qualified Dividends and Capital Gain Tax Worksheet line 8, page 38"
-
-[lines."qdcg.9"]
-label = "Amount taxed at 0 percent"
-rule = "Line 7 minus line 8."
-src = "i1040"
-at = "Qualified Dividends and Capital Gain Tax Worksheet line 9, page 38"
-
-[lines."qdcg.10"]
-label = "Smaller of line 1 or line 4"
-rule = "The smaller of line 1 or line 4."
-src = "i1040"
-at = "Qualified Dividends and Capital Gain Tax Worksheet line 10, page 38"
-
-[lines."qdcg.11"]
-label = "Line 9"
-rule = "Copy line 9."
-src = "i1040"
-at = "Qualified Dividends and Capital Gain Tax Worksheet line 11, page 38"
-
-[lines."qdcg.12"]
-label = "Line 10 minus line 11"
-rule = "Line 10 minus line 11."
-src = "i1040"
-at = "Qualified Dividends and Capital Gain Tax Worksheet line 12, page 38"
-
-[lines."qdcg.13"]
-label = "Top of the 15 percent range"
-rule = "$533,400 single, $300,000 married filing separately, $600,050 joint or surviving spouse, $566,700 head of household."
-src = "i1040"
-at = "Qualified Dividends and Capital Gain Tax Worksheet line 13, page 38"
-
-[lines."qdcg.14"]
-label = "Smaller of line 1 or line 13"
-rule = "The smaller of line 1 or line 13."
-src = "i1040"
-at = "Qualified Dividends and Capital Gain Tax Worksheet line 14, page 38"
-
-[lines."qdcg.15"]
-label = "Line 5 plus line 9"
-rule = "Add lines 5 and 9."
-src = "i1040"
-at = "Qualified Dividends and Capital Gain Tax Worksheet line 15, page 38"
-
-[lines."qdcg.16"]
-label = "Line 14 minus line 15"
-rule = "Line 14 minus line 15. If zero or less, enter 0."
-src = "i1040"
-at = "Qualified Dividends and Capital Gain Tax Worksheet line 16, page 38"
-
-[lines."qdcg.17"]
-label = "Amount taxed at 15 percent"
-rule = "The smaller of line 12 or line 16."
-src = "i1040"
-at = "Qualified Dividends and Capital Gain Tax Worksheet line 17, page 38"
-
-[lines."qdcg.18"]
-label = "Tax at 15 percent"
-rule = "15 percent of line 17, rounded."
-src = "i1040"
-at = "Qualified Dividends and Capital Gain Tax Worksheet line 18, page 38"
-
-[lines."qdcg.19"]
-label = "Line 9 plus line 17"
-rule = "Add lines 9 and 17."
-src = "i1040"
-at = "Qualified Dividends and Capital Gain Tax Worksheet line 19, page 38"
-
-[lines."qdcg.20"]
-label = "Amount taxed at 20 percent"
-rule = "Line 10 minus line 19."
-src = "i1040"
-at = "Qualified Dividends and Capital Gain Tax Worksheet line 20, page 38"
-
-[lines."qdcg.21"]
-label = "Tax at 20 percent"
-rule = "20 percent of line 20, rounded."
-src = "i1040"
-at = "Qualified Dividends and Capital Gain Tax Worksheet line 21, page 38"
-
-[lines."qdcg.22"]
-label = "Tax on line 5"
-rule = "Tax Table if line 5 is under $100,000, otherwise the Tax Computation Worksheet."
-src = "i1040"
-at = "Qualified Dividends and Capital Gain Tax Worksheet line 22, page 38"
-
-[lines."qdcg.23"]
-label = "Lines 18, 21 and 22"
-rule = "Add lines 18, 21 and 22."
-src = "i1040"
-at = "Qualified Dividends and Capital Gain Tax Worksheet line 23, page 38"
-
-[lines."qdcg.24"]
-label = "Tax on line 1"
-rule = "Tax Table if line 1 is under $100,000, otherwise the Tax Computation Worksheet."
-src = "i1040"
-at = "Qualified Dividends and Capital Gain Tax Worksheet line 24, page 38"
-
-[lines."qdcg.25"]
-label = "Tax on all taxable income"
-rule = "The smaller of line 23 or line 24."
-src = "i1040"
-at = "Qualified Dividends and Capital Gain Tax Worksheet line 25, page 38"
 
 [lines."8812.1"]
 label = "Adjusted gross income"
