@@ -202,9 +202,23 @@ def cmd_new(job: Job, args) -> int:
     return 0
 
 
+TIERS = Path(__file__).resolve().parent.parent / "skills" / "plugin" / "untocaesar" / "tiers"
+
+
+def tier_rules() -> list[str]:
+    """The Rules section of the tier card named by CAESAR_TIER, so it comes back after a compaction."""
+    tier = os.environ.get("CAESAR_TIER", "").upper()
+    card = TIERS / f"{tier}.md"
+    if tier not in ("S", "M", "L") or not card.exists():
+        return []
+    text = card.read_text(encoding="utf-8")
+    section = text.split("## Rules", 1)[1].split("\n## ", 1)[0] if "## Rules" in text else ""
+    return [f"Tier {tier} rules:"] + [line for line in section.strip().splitlines() if line.strip()]
+
+
 def cmd_status(job: Job, args) -> int:
     if not job.exists():
-        emit(job, [f"caesar {__version__}. No job at {job.path} yet."])
+        emit(job, [f"caesar {__version__}. No job at {job.path} yet."] + tier_rules())
         return 0
     facts = job.facts()
     refusals = C.fact_refusals(facts)
@@ -221,7 +235,7 @@ def cmd_status(job: Job, args) -> int:
         lines.append(f"State: {return_state(facts, job.state().get('check') if job.ret() else None)}.")
         if next_step(job) is None:
             lines.append(SAFETY)
-    emit(job, lines)
+    emit(job, lines + tier_rules())
     return 0
 
 
