@@ -121,6 +121,9 @@
   "untocaesar": {
     "misread": {
       "w2.1.box1": "25000"
-    }
+    },
+    "anchors": [
+      "docs/SPEC.md: the scripted person rejects a misread W-2 box 1 at confirm, which must end in a failing check"
+    ]
   }
 }

@@ -1,0 +1,98 @@
+"""caesar's messages: the banner, one NEXT line, and what set and confirm refuse to do."""
+
+import contextlib
+import io
+
+import pytest
+
+from caesar import cli
+
+BANNER = "Test build: synthetic cases only, not for real records."
+
+
+def run(job, *args):
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        code = cli.main(["--job", str(job), *args])
+    return code, buf.getvalue()
+
+
+@pytest.fixture
+def job(tmp_path, monkeypatch):
+    monkeypatch.setenv("CAESAR_CMD", "caesar")
+    monkeypatch.delenv("CAESAR_SCRIPTED_PERSON", raising=False)
+    return tmp_path / "job"
+
+
+def check_message(out):
+    lines = out.strip().splitlines()
+    assert lines[0] == BANNER
+    assert lines[-1].startswith("NEXT: ")
+    assert sum(1 for x in lines if x.startswith("NEXT: ")) == 1
+
+
+def test_every_message_has_the_banner_and_one_next_line(job):
+    for args in (("status",), ("new",), ("status",), ("ask",), ("facts",), ("compute",), ("check",),
+                 ("set", "screen.ssa1099", "no", "--source", "answer"), ("set", "nope", "1", "--source", "x"),
+                 ("explain", "16"), ("worksheet",), ("done",), ("confirm",)):
+        _, out = run(job, *args)
+        check_message(out)
+
+
+def test_status_repeats_the_next_line(job):
+    run(job, "new")
+    _, ask = run(job, "ask")
+    _, status = run(job, "status")
+    assert status.strip().splitlines()[-1] == "NEXT: caesar --job " + str(job) + " ask"
+    assert ask.strip().splitlines()[-1].startswith("NEXT: caesar --job " + str(job) + " set screen.ssa1099 <yes or no>")
+
+
+@pytest.mark.parametrize("extra", [["--confirmed"], ["--confirmed=yes"], ["--confirm"], ["confirmed=yes"]])
+def test_set_cannot_mark_a_fact_confirmed(job, extra):
+    run(job, "new")
+    code, out = run(job, "set", "screen.ssa1099", "no", "--source", "answer", *extra)
+    assert code == 2
+    assert "Only the person can, through caesar confirm" in out
+    assert "screen.ssa1099" not in (job / "facts.toml").read_text(encoding="utf-8")
+
+
+def test_set_cannot_target_the_confirmed_field(job):
+    run(job, "new")
+    code, out = run(job, "set", "screen.ssa1099.confirmed", "yes", "--source", "answer")
+    assert code == 2
+
+
+def test_set_rejects_a_fact_outside_the_schema(job):
+    run(job, "new")
+    code, out = run(job, "set", "w2.1.box1", "50000", "--source", "W-2 box 1")
+    assert code == 2 and "no fact named w2.1.box1" in out
+    code, out = run(job, "set", "income.crypto", "5", "--source", "answer")
+    assert code == 2
+
+
+def test_set_validates_values(job):
+    run(job, "new")
+    code, out = run(job, "set", "screen.ssa1099", "maybe", "--source", "answer")
+    assert code == 2 and "answer yes or no" in out
+
+
+def test_screening_yes_is_a_refusal(job):
+    run(job, "new")
+    code, out = run(job, "set", "screen.1099r", "yes", "--source", "answer")
+    assert code == 1
+    assert "retirement distributions" in out
+    assert out.strip().endswith("NEXT: none")
+
+
+def test_confirm_without_a_person_records_nothing(job):
+    run(job, "new")
+    run(job, "set", "screen.ssa1099", "no", "--source", "answer")
+    code, out = run(job, "confirm")
+    assert "computed, not confirmed" in out
+    assert 'confirmed = ""' in (job / "facts.toml").read_text(encoding="utf-8")
+
+
+def test_no_start_gate(job, monkeypatch):
+    monkeypatch.delenv("CAESAR_LOCAL_ONLY_ACK", raising=False)
+    code, out = run(job, "new")
+    assert code == 0
