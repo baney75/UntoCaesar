@@ -22,7 +22,7 @@ Not for v0: businesses that file their own entity returns (1120, 1120-S, 1065), 
 
 ## One-minute setup
 
-1. In Local Studio, open Plugins, pick UntoCaesar from the catalog, press Install. No capability prompt appears, because v0 asks for none (below).
+1. In Local Studio, open Plugins, pick UntoCaesar from the catalog, press Install. Local Studio asks once for the `ask-user` capability ("Ask you questions and ask before risky steps"), which UntoCaesar uses only to have the person confirm facts (below).
 2. Local Studio checks that the current session uses a local model through Fonsviva. If not, it offers the local models that passed UntoCaesar's tier evals on this hardware and switches to one. This step needs the `local_only` and tier asks below; until they land, the plugin is a dev build for synthetic cases only and this step is skipped.
 3. Type `/taxes`. The skill runs `caesar status`, which prints the first question and a `NEXT:` line.
 
@@ -38,7 +38,7 @@ The plugin follows Gantrel's pattern, so the family behaves the same way:
 
 The job folder holds:
 
-- `facts.toml`: every fact about the person's year (filing status, dependents, each W-2 box, each 1099 box, each Schedule C income and expense line), each with where it came from (a document and box, or the person's answer) and whether the person confirmed it.
+- `facts.toml`: every fact about the person's year (filing status, dependents, each W-2 box, each 1099 box, each Schedule C income and expense line), each with where it came from (a document and box, or the person's answer) and whether the person confirmed it. The model cannot write that flag: `caesar set` rejects it.
 - `documents/`: the person's own files, never copied anywhere else.
 - `return.json`: the computed return, line by line, with citations.
 - `worksheet.html`: the readable show-your-work page, one row per line: inputs, rule, citation, result. It is one static file with no script: every string from a fact or a document is HTML escaped, and the page carries `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">`, so a hostile string in a payer name can neither run nor reach the network. A golden case puts such a string in a 1099 field.
@@ -46,6 +46,10 @@ The job folder holds:
 The job folder is encrypted at rest before any release meant for real records (AGENTS.md: user data is encrypted at rest). The standard library has no vetted cipher, so v0 asks the core for encrypted plugin storage with the key in the OS keychain (ask 3 below, local-studio#13) rather than rolling its own. Until that lands, the dev build holds synthetic cases only (see "Capabilities it asks for").
 
 The model's job is the interview and document reading: ask plain questions, read W-2s and 1099s, write facts with `caesar set`, and explain results in plain words. `caesar compute` does the math. `caesar check` runs consistency checks (W-2 withholding against wages, 1099-NEC totals against Schedule C gross receipts, missing confirmations) and lists every unconfirmed fact. A return is marked prepared only when every fact is confirmed by the person and every check passes.
+
+Confirmation never goes through the model. `caesar confirm` shows each fact, its value and its source ("W-2 from Acme, box 1: $50,000") to the person through the core's `ask-user` dialog, and records only the person's answer. Until the core guarantees that dialog is answered by the person and not by the session's model (local-studio#15), no fact counts as confirmed, and the best state a return reaches is "computed, not confirmed". In the tier evals the scripted person answers that dialog and rejects any misread value, so a model that writes a wrong fact ends in a failing check, never a silent error; one case per suite has a misread W-2 box 1 the person rejects.
+
+Refusals also cover what no form shows. `caesar check` computes earned income credit eligibility from the facts it holds (earned income, AGI, qualifying children, filing status) and refuses when the person may qualify, since v0 cannot claim it and a return without it could cost the person the credit. Screening questions also ask about the elective items v0 cannot claim (educator expenses, IRA contributions, student loan interest, tuition, HSA contributions), and a yes is a refusal. Golden refusal cases include an EIC eligible W-2 filer with one child.
 
 ### Tax years
 
@@ -63,21 +67,21 @@ Each refusal has a plain message. The named ones include: Social Security benefi
 
 ## Capabilities it asks for
 
-None in v0. The skill runs `caesar` through the session's bash tool, the same way Gantrel runs `stone`.
+`ask-user` only, for the person's confirmation of facts. The skill runs `caesar` through the session's bash tool, the same way Gantrel runs `stone`.
 
 What the plugin API lacks, filed as an issue on baney75/local-studio:
 
-1. `local_only`: a manifest flag that makes the core refuse to run the plugin's commands in a session whose provider is not local (Fonsviva or the local fleet), and turns off web tools in that session. Without it, the skill can only ask, which is not enough for tax records.
+1. `local_only`: a manifest flag that makes the core refuse to run the plugin's commands in a session whose provider is not local (Fonsviva or the local fleet), and turns off web tools and network access for the session's bash and every other tool in that session. Without it, the skill can only ask, which is not enough for tax records.
 2. A way for the plugin to know the session's tier (S, M or L), so the right tier card loads without the person setting `CAESAR_TIER`.
 3. Encrypted plugin storage (local-studio#13): a folder the core encrypts at rest with a key in the OS keychain, so the job folder is never plain text on disk.
 
-Until `local_only` and encrypted storage land, UntoCaesar is a dev build for synthetic test cases only. A check the model runs cannot guard against the model, so the skill's own provider check is a reminder, not a guard. `caesar` refuses to start unless `CAESAR_LOCAL_ONLY_ACK=1` is set, every page and message it writes says "Test build: synthetic cases only, not for real records", and no nightly or stable release ships until the core enforces `local_only`, the manifest declares it, and the job folder lives in encrypted storage. Tier L means the largest local models, never a cloud model: a person's tax figures never reach a cloud provider at any tier. Frontier cloud models appear only as rivals in the win check below, on synthetic cases.
+Until `local_only` and encrypted storage land, UntoCaesar is a dev build for synthetic test cases only. A check the model runs cannot guard against the model, so the skill's own provider check is a reminder, not a guard. Every page and message it writes says "Test build: synthetic cases only, not for real records", and no nightly or stable release ships until the core enforces `local_only` with network off for the session's tools, the manifest declares it, the `ask-user` dialog is answered only by the person (local-studio#15), and the job folder lives in encrypted storage. Tier L means the largest local models, never a cloud model: a person's tax figures never reach a cloud provider at any tier. Frontier cloud models appear only as rivals in the win check below, on synthetic cases.
 
 ## What runs locally
 
 Everything: the model through Fonsviva, the CLI, the job folder. Nothing in the plugin imports a network library; a CI check fails the build if any module under `caesar/` imports `socket`, `urllib`, `http`, `ssl` or a third-party networking package.
 
-Open risk: the session's bash tool can reach the network, so a model misled by a hostile document could send facts out with `curl`. The `local_only` ask covers web tools; turning off network for the session's bash is part of the same ask, and it is a release gate like the rest.
+Open risk: the session's bash tool can reach the network, so a model misled by a hostile document could send facts out with `curl`. Ask 1 above covers it: `local_only` turns off network for the session's bash and every other tool, and it is a release gate like the rest.
 
 ## Evals
 
@@ -112,7 +116,7 @@ These evals go in the catalog entry for each tier, with the model, hardware, dat
 
 ## The check that says it wins
 
-Run on the same 30 cases, same documents, same simulated answers:
+Run on the tier M suite (24 cases) for checks 1 and 2, with the same documents and simulated answers:
 
 1. UntoCaesar on a tier M local model against the same local model with no plugin, and against a frontier chat model with no plugin given the same documents. UntoCaesar wins if its exact-return rate is higher than both and its silent error count is 0.
 2. On TaxCalcBench's published tax year 2025 leaderboard, the best model is exactly right on 86% of returns with web search and 62% without, and open-weight models score 0% to 6%. UntoCaesar's bar on its in-scope cases in the same format, with a local tier M model, is the tier M bar above: at least 9 of 10 runs strict exact on every case, which is a strict score of 90% or more, and 0 silent errors.
