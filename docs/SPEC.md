@@ -55,7 +55,7 @@ Form 1040 with: wages (W-2), interest and ordinary dividends (1099-INT, 1099-DIV
 
 ### Refusal list for v0
 
-`caesar check` detects these from the facts and stops with a plain message: itemized deductions, capital gains or losses, rental income, K-1s, foreign income or accounts, the earned income credit, education credits, premium tax credit (1095-A), household employees, inventory or cost of goods sold, home office, vehicle actual expenses, depreciation, net operating losses, alternative minimum tax, and any state return. Each item moves off this list only when its golden cases pass.
+`caesar check` detects these from the facts and stops with a plain message, modeled on the 55 knockout facts in IRS Direct File's public-domain code: itemized deductions, capital gains or losses, rental income, K-1s, foreign income or accounts, the earned income credit, education credits, premium tax credit (1095-A), household employees, inventory or cost of goods sold, home office, vehicle actual expenses, depreciation, net operating losses, alternative minimum tax, and any state return. Each item moves off this list only when its golden cases pass.
 
 ## Capabilities it asks for
 
@@ -75,6 +75,8 @@ Everything: the model through Fonsviva, the CLI, the job folder. Nothing in the 
 ## Evals
 
 Each eval case is a synthetic person: no real person's tax or financial data is ever used. A case has the person's documents (W-2, 1099 and receipt files made for the case), a scripted set of answers the simulated person gives, and the known-correct return, line by line.
+
+Cases use TaxCalcBench's layout (an `input.json` per case plus the expected Form 1040 lines, scored strict and within $5), with new tax year 2025 cases, so UntoCaesar's numbers compare directly with that public leaderboard. TaxCalcBench's own cases are MIT licensed for evaluation only and are never used to train or tune a model. UntoCaesar adds a citation check and a refusal check to each case.
 
 Known answers come from three places, in order of trust: (1) IRS training material with published answers (the VITA/TCE comprehensive problems in Publication 4491 and its workbook, for the tax year), (2) public benchmark cases with their published answers where the license allows, such as TaxCalcBench, (3) our own cases, each computed by `caesar` and by an independent engine (OpenTaxSolver, or the IRS Fact Graph) and kept only when both agree and a reviewer checked the citations.
 
@@ -104,8 +106,9 @@ These evals go in the catalog entry for each tier, with the model, hardware, dat
 Run on the same 30 cases, same documents, same simulated answers:
 
 1. UntoCaesar on a tier M local model against the same local model with no plugin, and against a frontier chat model with no plugin given the same documents. UntoCaesar wins if its exact-return rate is higher than both and its silent error count is 0.
-2. UntoCaesar's engine against OpenTaxSolver on the cases both support: they must agree on every line, or the disagreement is traced to a cited rule and the wrong side fixed.
-3. Against TurboTax, H&R Block, FreeTaxUSA and the IRS options, which cannot be run here without accounts: the study compares price, privacy, platforms, citations and published accuracy tests, and says plainly where UntoCaesar does not win (state returns, e-file, the forms it refuses).
+2. On TaxCalcBench's published tax year 2025 leaderboard, the best model is exactly right on 86% of returns with web search and 62% without, and open-weight models score 0% to 6%. UntoCaesar's bar on its in-scope cases in the same format is 100% strict, with a local tier M model.
+3. UntoCaesar's engine against OpenTaxSolver on the cases both support: they must agree on every line, or the disagreement is traced to a cited rule and the wrong side fixed.
+4. Against TurboTax, H&R Block, FreeTaxUSA, Cash App Taxes and IRS Free File (IRS Direct File was suspended in October 2025 and did not run in 2026), which cannot be run here without accounts: the study compares price, privacy, platforms, citations and published accuracy tests, and says plainly where UntoCaesar does not win (state returns, e-file, the forms it refuses).
 
 A blind council scores the final dev build on three worked cases: correctness, how clearly the work is shown, and how well it explains.
 
