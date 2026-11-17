@@ -1,25 +1,25 @@
-# Releases: Stable and Dev
+# Releases: stable, nightly and dev
 
-Unto Caesar must be stable, so it ships on two update channels only. There is no nightly channel.
+Unto Caesar follows the Local Studio family release scheme in [local-studio docs/channels.md](https://github.com/baney75/local-studio/blob/main/docs/channels.md). Where this file and that one disagree, that one wins.
 
-## Channels
+Unto Caesar ships as a Local Studio plugin from a git tree, so each channel is a git ref:
 
-| Channel | Branch | Who it's for | How often |
-|---|---|---|---|
-| **Stable** | `stable` | Everyone. This is the default and the only channel most people see. | When a tested release is promoted |
-| **Dev** | `main` | Developers and testers only. Hidden behind a developer setting and never used for real work. | When `main` has new commits and CI is green |
+| Channel | Ref | Who it's for |
+|---|---|---|
+| **stable** | newest `vX.Y.Z` tag on the `stable` branch | Everyone. The default. |
+| **nightly** | rolling `nightly` tag, moved at 07:00 UTC when `main` changed and its checks pass | Daily users who want new work first |
+| **dev** | `main` | Developers and agents testing a change |
 
 ## How a change reaches users
 
-1. Work happens on feature branches and merges into `main` by pull request, with CI green.
-2. `main` is published to the Dev channel, tagged `dev-YYYY-MM-DD`.
-3. A Dev build is promoted to Stable only after every test in TESTING.md passes for every supported model, with no regressions. It is then merged into `stable` and tagged `vMAJOR.MINOR.PATCH`.
-4. Urgent fixes go to `stable` through a pull request, then get merged back into `main`.
+1. Work merges into `main` by pull request with CI green. That is dev.
+2. Each day `main` becomes nightly when CI and the tier evals in TESTING.md pass and no open issue is labeled `regression` and `blocks-nightly`.
+3. A nightly is promoted to stable after 72 hours on nightly with no open regression, every TESTING.md check passing for every supported model, and plain release notes. `stable` fast-forwards to it and it is tagged `vX.Y.Z`.
+4. Hotfixes go to `stable` by pull request with a check that fails before the fix, then merge back into `main` the same day.
 
-## Update rules for the app
+## Update rules
 
-- Updates are signed and verified before they install.
 - User data is backed up before every update, and migrations are reversible.
 - Every update can be rolled back to the previous version.
-- The app shows what changed, in plain words, before and after updating.
-- No update ever deletes user data or changes work in progress without asking.
+- What changed is shown in plain words before updating.
+- No update deletes user data or changes work in progress without asking.

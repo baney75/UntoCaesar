@@ -23,6 +23,9 @@ Nothing below is built yet. See [SUPPORTED.md](SUPPORTED.md) for what works toda
 
 ## First version
 
+The first version ships as a plugin for [Local Studio](https://github.com/baney75/local-studio): a federal Form 1040, with Schedule C and Schedule SE for freelancers, prepared on a local model with every line cited and shown. Its plan, evals and bars are in [docs/SPEC.md](docs/SPEC.md). The paragraph below is the longer-term app plan.
+
+
 A federal Form 1040 for W-2 filers, prepared for the person to review and file. The tax math comes from the IRS's open-source [Fact Graph](https://github.com/IRS-Public/fact-graph) or our own tested code, checked against known-correct returns. The local model reads documents and explains, but it never does the math. Businesses, state returns and e-file come later.
 
 ## How it's built
