@@ -6,6 +6,8 @@ Instructions for AI coding agents (Claude Code, Codex, Cursor and others) workin
 
 Open-source tax filing on safe, trusted local AI. It is for individuals, families, small and large businesses, and volunteers or institutions (universities, community hubs) filing for others. It starts as a desktop app that prepares a federal 1040 for W-2 filers, with the math in the IRS Fact Graph or tested code. Later it adds state returns, more forms, volunteer sites and deadline tracking. Everything stays encrypted.
 
+**Owner's direction:** read [docs/DIRECTION.md](docs/DIRECTION.md) before planning work. It sets where Unto Caesar is going and the bar a change must meet.
+
 ## Ground rules
 
 - **Local first, compute via Fonsviva.** Features must work with local models on the user's own hardware. All compute, including RunPod and other cloud providers, comes via [Fonsviva](https://github.com/baney75/Fonsviva). This app never adds providers, stores provider keys or calls a cloud provider itself. It connects to Fonsviva and shows where each job ran. Cloud providers are personal use only and are set up in Fonsviva.
