@@ -195,19 +195,12 @@ def test_a_text_fact_is_set_from_a_heredoc_not_shell_quotes(job, monkeypatch):
 
 
 @pytest.mark.parametrize("body", ["value: CAESAR_END\nsource: answer\n", "value: Acme\nsource: CAESAR_END\n",
-                                  "value: Acme\nCAESAR_END\nsource: answer\n"])
-def test_set_stdin_refuses_the_heredoc_delimiter(job, monkeypatch, body):
+                                  "value: Acme\nCAESAR_END\nsource: answer\n", "", "value: Acme\n", "source: answer\nvalue: Acme\n", "value: Acme\nsource: x\nmore\n"])
+def test_set_stdin_refuses_the_heredoc_delimiter_and_needs_a_value_line_and_a_source_line(job, monkeypatch, body):
     to_w2_employer(job)
     code, out = set_stdin(job, monkeypatch, "w2.1.employer", body)
-    assert code == 2 and "cannot be CAESAR_END" in out
+    assert code == 2 and ("cannot be CAESAR_END" if "CAESAR_END" in body else "exactly two lines") in out
     assert "w2.1.employer" not in cli.Job(job).facts()
-
-
-@pytest.mark.parametrize("body", ["", "value: Acme\n", "source: answer\nvalue: Acme\n", "value: Acme\nsource: x\nmore\n"])
-def test_set_stdin_needs_a_value_line_and_a_source_line(job, monkeypatch, body):
-    to_w2_employer(job)
-    code, out = set_stdin(job, monkeypatch, "w2.1.employer", body)
-    assert code == 2 and "exactly two lines" in out
 
 
 def test_set_stdin_takes_nothing_from_the_command_line(job, monkeypatch):

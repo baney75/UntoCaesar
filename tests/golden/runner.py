@@ -50,9 +50,9 @@ def caesar(job: Path, *args: str) -> tuple[int, str]:
 
 
 def next_command(output: str, job: Path) -> list[str] | None:
-    line = output.strip().splitlines()[-1]
+    line = next((x for x in output.splitlines() if x.startswith("NEXT: ")), output)  # a set NEXT runs on to a heredoc
     assert line.startswith("NEXT: "), output
-    words = shlex.split(line[len("NEXT: "):]) if os.name != "nt" else line[len("NEXT: "):].split()
+    words = shlex.split(line[len("NEXT: "):])  # caesar quotes NEXT for bash on every system
     if words == ["none"]:
         return None
     assert words[:3] == ["caesar", "--job", str(job)], line

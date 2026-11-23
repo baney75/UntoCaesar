@@ -40,7 +40,7 @@ def test_case(folder, tmp_path):
         assert want["fix"] in result["state"]["check"]["fix"]
         last = result["transcript"][-1]
         assert last[0] == "check" and last[1] == 1
-        assert f"set {want['fix']} <amount>" in last[2]
+        assert f"set {want['fix']} --stdin <<'CAESAR_END'\nvalue: <amount>\n" in last[2]
 
 
 def test_input_files_are_synthetic():
