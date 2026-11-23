@@ -2,6 +2,7 @@
 
 import json
 import re
+import subprocess
 
 import pytest
 import runner
@@ -41,7 +42,7 @@ def test_case(folder, tmp_path):
         assert want["fix"] in result["state"]["check"]["fix"]
         last = result["transcript"][-1]
         assert last[0] == "check" and last[1] == 1
-        assert f"set {want['fix']} <amount>" in last[2]
+        assert f"set {want['fix']} --stdin <<'CAESAR_END'\nvalue: <amount>\n" in last[2]
 
 
 def test_input_files_are_synthetic():
@@ -75,3 +76,40 @@ def test_hostile_payer_name_renders_inert(tmp_path):
     assert "Acme &quot;Payroll&quot; &amp; Co&#x27;s &lt;b&gt;" in page
     assert page.count("Test build: synthetic cases only, not for real records.") >= 1
     assert re.search(r"<(link|iframe|object|embed|base|form)\b", page) is None
+
+
+PWNED = "/tmp/caesar-pwned"
+
+
+def bash(script):
+    return subprocess.run([runner.BASH, "-c", script], capture_output=True).returncode
+
+
+def test_hostile_payer_name_goes_through_bash_byte_for_byte(tmp_path):
+    # second-F7: the runner fills each NEXT set template with the name as it is and runs it in bash.
+    bash(f"rm -f {PWNED}")
+    folder = runner.CASES / "hostile-payer-name"
+    case = json.loads((folder / "input.json").read_text(encoding="utf-8"))
+    rd = case["input"]["return_data"]
+    employer = rd["w2"][0]["employer_name"]["value"]
+    payer = rd["irs1040_scheduleb"]["irs1099_int"][0]["interest_1099int_payer"]["value"]
+    for needle in (f"$(touch {PWNED})", f"`touch {PWNED}`", '"', "'", "\\"):
+        assert needle in employer
+    (tmp_path / "hostile").mkdir()
+    result = runner.run(folder, workdir=tmp_path / "hostile")
+    assert bash(f"test -e {PWNED}") != 0, "a payer name ran a command"
+    facts = runner.cli.Job(result["job"]).facts()
+    assert facts["w2.1.employer"]["value"] == employer
+    assert facts["w2.1.box1"]["source"] == f"W-2 from {employer}, box 1"
+    assert facts["int1099.1.payer"]["value"] == payer
+
+    rd["w2"][0]["employer_name"]["value"] = "Acme Payroll"
+    rd["irs1040_scheduleb"]["irs1099_int"][0]["interest_1099int_payer"]["value"] = "First Bank"
+    twin = tmp_path / "plain-payer-name"
+    twin.mkdir()
+    (twin / "input.json").write_text(json.dumps(case), encoding="utf-8")
+    (tmp_path / "plain").mkdir()
+    plain = runner.run(twin, workdir=tmp_path / "plain")
+    assert result["outcome"] == plain["outcome"] == "prepared"
+    assert result["lines"] == plain["lines"]
+    assert result["state"]["final"] == plain["state"]["final"]

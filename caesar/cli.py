@@ -110,17 +110,47 @@ def prog(job: Job) -> str:
 
 
 def quote_arg(text: str) -> str:
-    if os.name == "nt":
-        return f'"{text}"' if any(c in text for c in ' "&|<>^') else text
+    # NEXT lines run in bash on every system, Windows included (the skill's bash tool), and a set
+    # line carries a bash heredoc, so quote for bash everywhere.
     return shlex.quote(text)
+
+
+# A set whose value or source can hold document text reads them from a quoted heredoc. The quoted
+# delimiter turns off every expansion, so a payer named $(...) or `...` with quotes and
+# backslashes reaches caesar as plain bytes, and the model never has to escape anything.
+END = "CAESAR_END"
 
 
 def set_template(spec: F.Spec) -> str:
     hint = {"status": "<single, mfj, mfs, hoh or qss>", "yesno": "<yes or no>", "owner": "<taxpayer or spouse>",
             "count": "<number>", "codes": "<codes or none>", "money": "<amount>", "number": "<number>",
-            "text": '"<name>"'}[spec.kind]
-    source = "<document and box, or: answer>" if not spec.name.startswith(("screen.", "filing_status")) else "answer"
-    return f'set {spec.name} {hint} --source "{source}"'
+            "text": "<name>"}[spec.kind]
+    if spec.name.startswith(("screen.", "filing_status")):
+        # The person's own answer: a word caesar checks, and a fixed source.
+        return f"set {spec.name} {hint} --source answer"
+    return f"set {spec.name} --stdin <<'{END}'\nvalue: {hint}\nsource: <document and box, or: answer>\n{END}"
+
+
+def read_stdin() -> tuple[str, str]:
+    """The value and source of caesar set --stdin: a value: line, then a source: line."""
+    if sys.stdin is None or sys.stdin.isatty():
+        raise Stop([f"caesar set --stdin reads the value and source from a heredoc, as NEXT shows: a value: line,"
+                    f" a source: line, then {END} on its own line."])
+    stream = getattr(sys.stdin, "buffer", None)
+    try:
+        text = stream.read().decode("utf-8") if stream is not None else sys.stdin.read()
+    except UnicodeDecodeError:
+        raise Stop(["caesar set --stdin: the input is not UTF-8 text."]) from None
+    lines = [line.rstrip("\r") for line in text.split("\n")]
+    while lines and not lines[-1].strip():
+        lines.pop()
+    if any(line.strip() == END or line.split(":", 1)[-1].strip() == END for line in lines):
+        raise Stop([f"A value or source cannot be {END}: that word ends the heredoc. Read the document again;"
+                    " if it really says that, the person needs another way to file."])
+    if len(lines) != 2 or not lines[0].startswith("value:") or not lines[1].startswith("source:"):
+        raise Stop([f"caesar set --stdin needs exactly two lines before {END}: value: <the value>, then"
+                    " source: <document and box, or: answer>. Put each on one line."])
+    return lines[0][len("value:"):], lines[1][len("source:"):]
 
 
 def next_step(job: Job) -> str | None:
@@ -252,8 +282,10 @@ def cmd_ask(job: Job, args) -> int:
         return 0
     spec = missing[0]
     lines = [f"Ask the person: {spec.question}",
-             f"Then record the answer with caesar set {spec.name}. Put where it came from in --source: the document and box"
-             " (for example \"W-2 from Acme, box 1\"), or answer when the person said it."]
+             f"Then record the answer with the caesar set {spec.name} command below. Where it came from is the document and box"
+             " (for example W-2 from Acme, box 1), or answer when the person said it."]
+    if "--stdin" in set_template(spec):
+        lines.append(f"Copy the value and source as they are, each on its own line, with no quotes or escapes; {END} ends them.")
     emit(job, lines, set_template(spec))
     return 0
 
@@ -264,9 +296,17 @@ def cmd_set(job: Job, args) -> int:
     if spec is None:
         raise Stop([f"caesar v0 has no fact named {args.fact} here. It knows only the facts its interview asks for;"
                     " run caesar ask to see the next one. A fact for a later item (such as w2.2) appears once its count is set."])
+    if args.stdin:
+        if args.value is not None or args.source is not None:
+            raise Stop(["caesar set --stdin takes the value and source from the heredoc only, not from the command line."])
+        raw_value, raw_source = read_stdin()
+    elif args.value is None or args.source is None:
+        raise Stop([f"caesar set needs a value and --source, or --stdin with a heredoc. Run caesar ask to see the {args.fact} command."])
+    else:
+        raw_value, raw_source = args.value, args.source
     try:
-        value = F.normalize(spec.kind, args.value)
-        source = F.normalize("text", args.source)
+        value = F.normalize(spec.kind, raw_value)
+        source = F.normalize("text", raw_source)
     except ValueError as err:
         raise Stop([f"{args.fact}: {err}."]) from None
     old = facts.get(args.fact)
@@ -333,7 +373,7 @@ def cmd_facts(job: Job, args) -> int:
         e = facts[name]
         state = {"yes": "confirmed", "no": "REJECTED by the person"}.get(e["confirmed"], "not confirmed")
         lines.append(f"- {name} = {e['value']} (source: {e['source']}; {state})")
-    lines.append("To change a fact: caesar set <fact> <value> --source \"<where it came from>\".")
+    lines.append(f"To change a fact: caesar set <fact> --stdin <<'{END}', then a value: line, a source: line and {END}.")
     emit(job, lines)
     return 0
 
@@ -514,8 +554,9 @@ def parser() -> argparse.ArgumentParser:
     sub.add_parser("ask", help="the next interview question")
     s = sub.add_parser("set", help="record a fact")
     s.add_argument("fact")
-    s.add_argument("value")
-    s.add_argument("--source", required=True, help="the document and box, or answer")
+    s.add_argument("value", nargs="?")
+    s.add_argument("--source", help="the document and box, or answer")
+    s.add_argument("--stdin", action="store_true", help=f"read value: and source: lines from stdin (a heredoc ending in {END})")
     c = sub.add_parser("confirm", help="ask the person to confirm facts")
     c.add_argument("fact", nargs="?")
     sub.add_parser("facts", help="list every fact")

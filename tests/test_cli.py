@@ -29,8 +29,17 @@ def job(tmp_path, monkeypatch):
 def check_message(out):
     lines = out.strip().splitlines()
     assert lines[0] == BANNER
-    assert lines[-1].startswith("NEXT: ")
     assert sum(1 for x in lines if x.startswith("NEXT: ")) == 1
+    # NEXT is the last line, or a set whose heredoc runs on to the end.
+    if lines[-1] == cli.END:
+        assert lines[-4].startswith("NEXT: ") and lines[-4].endswith(" --stdin <<'CAESAR_END'")
+    else:
+        assert lines[-1].startswith("NEXT: ")
+
+
+def set_stdin(job, monkeypatch, name, body):
+    monkeypatch.setattr("sys.stdin", io.TextIOWrapper(io.BytesIO(body.encode("utf-8")), encoding="utf-8"))
+    return run(job, "set", name, "--stdin")
 
 
 def test_every_message_has_the_banner_and_one_next_line(job):
@@ -123,7 +132,7 @@ def test_joint_return_asks_each_business_owner(job):
     assert out.strip().endswith("NEXT: caesar --job " + str(job) + " ask")
     answer(job, ("business.1.name", "Birch Design"))
     _, out = run(job, "ask")
-    assert "set business.1.owner <taxpayer or spouse>" in out
+    assert "set business.1.owner --stdin <<'CAESAR_END'\nvalue: <taxpayer or spouse>\nsource: " in out
     answer(job, ("business.1.owner", "taxpayer"), ("business.2.name", "Fern Tutoring"))
     _, out = run(job, "status")
     assert "outside what caesar v0" not in out
@@ -143,7 +152,7 @@ def test_eic_child_question_is_asked_without_dependents(job):
     answer(job, ("filing_status", "single"), ("taxpayer.born_before_1961", "no"), ("taxpayer.blind", "no"),
            ("taxpayer.ssn_valid_for_work", "yes"), ("dependents.count", "0"))
     _, out = run(job, "ask")
-    assert "set eic.children <number>" in out
+    assert "set eic.children --stdin <<'CAESAR_END'\nvalue: <number>\n" in out
     assert "even one you do not list as a dependent" in out
 
 
@@ -160,3 +169,50 @@ def test_a_confirmation_caesar_did_not_record_is_refused_on_load(job, by):
         check_message(out)
         assert code == 2 and "only caesar confirm records" in out
         assert out.strip().endswith("NEXT: none")
+
+
+def to_w2_employer(job):
+    run(job, "new")
+    answer(job, *[(name, "no") for name in SCREENS_NO])
+    answer(job, ("filing_status", "single"), ("taxpayer.born_before_1961", "no"), ("taxpayer.blind", "no"),
+           ("taxpayer.ssn_valid_for_work", "yes"), ("dependents.count", "0"), ("eic.children", "0"), ("w2.count", "1"))
+    _, out = run(job, "ask")
+    return out
+
+
+def test_a_text_fact_is_set_from_a_heredoc_not_shell_quotes(job, monkeypatch):
+    # second-F7: document text never lands inside shell syntax the model must escape.
+    out = to_w2_employer(job)
+    assert out.strip().endswith("set w2.1.employer --stdin <<'CAESAR_END'\nvalue: <name>\n"
+                                "source: <document and box, or: answer>\nCAESAR_END")
+    check_message(out)
+    name = "Acme \"Payroll\" & Co's $(touch x) `id` C:\\new"
+    code, out = set_stdin(job, monkeypatch, "w2.1.employer", f"value: {name}\nsource: W-2 from {name}, box c\n")
+    assert code == 0, out
+    stored = cli.Job(job).facts()["w2.1.employer"]
+    assert stored["value"] == name and stored["source"] == f"W-2 from {name}, box c"
+
+
+@pytest.mark.parametrize("body", ["value: CAESAR_END\nsource: answer\n", "value: Acme\nsource: CAESAR_END\n",
+                                  "value: Acme\nCAESAR_END\nsource: answer\n"])
+def test_set_stdin_refuses_the_heredoc_delimiter(job, monkeypatch, body):
+    to_w2_employer(job)
+    code, out = set_stdin(job, monkeypatch, "w2.1.employer", body)
+    assert code == 2 and "cannot be CAESAR_END" in out
+    assert "w2.1.employer" not in cli.Job(job).facts()
+
+
+@pytest.mark.parametrize("body", ["", "value: Acme\n", "source: answer\nvalue: Acme\n", "value: Acme\nsource: x\nmore\n"])
+def test_set_stdin_needs_a_value_line_and_a_source_line(job, monkeypatch, body):
+    to_w2_employer(job)
+    code, out = set_stdin(job, monkeypatch, "w2.1.employer", body)
+    assert code == 2 and "exactly two lines" in out
+
+
+def test_set_stdin_takes_nothing_from_the_command_line(job, monkeypatch):
+    to_w2_employer(job)
+    monkeypatch.setattr("sys.stdin", io.TextIOWrapper(io.BytesIO(b"value: Acme\nsource: W-2\n"), encoding="utf-8"))
+    code, out = run(job, "set", "w2.1.employer", "Other", "--stdin")
+    assert code == 2 and "from the heredoc only" in out
+    code, out = run(job, "set", "w2.1.employer")
+    assert code == 2 and "needs a value and --source" in out
