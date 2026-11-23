@@ -88,6 +88,7 @@ def test_no_keychain_means_nothing_signed(tmp_path):
         out = confirm(server, path)
     assert "No keychain: secret-tool is not installed" in out and "every fact stays unconfirmed" in out
     assert set(states(path).values()) == {""} and not (path / ledger.NAME).exists()
+    assert "confirm_hash" not in cli.Job(path).state()  # nobody was asked, so confirm stays the next step
 
 
 def test_the_scripted_person_is_reached_only_in_process(tmp_path, monkeypatch):

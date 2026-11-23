@@ -411,7 +411,7 @@ def cmd_confirm(job: Job, args) -> int:
             lines.append("Rejected (read the document again and set the right value): " + ", ".join(rejected_now) + ".")
     job.save_facts(facts)
     state = job.state()
-    if isinstance(person, K.NoPersonChannel):
+    if isinstance(person, K.NoPersonChannel) or key is None:  # nobody was asked
         state.setdefault("unasked", {})[job.ctx.origin] = content_hash(facts)
     else:
         state["confirm_hash"] = content_hash(facts)
