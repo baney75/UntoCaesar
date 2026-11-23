@@ -20,6 +20,17 @@ Each row names the golden case whose every computed line passes `uv run --group 
 | A payer name with HTML in it renders inert on worksheet.html | `tests/golden/2025/hostile-payer-name` |
 | A misread W-2 box 1 that the person rejects at confirm ends in a failing check | `tests/golden/2025/misread-w2-box1` |
 
+Only the person confirms a fact: caesar-mcp's confirm asks through Local Studio's question card, checks that the socket's peer is the installed Local Studio app, and keeps each answer in a ledger signed with a key in the OS keychain. These cases pass:
+
+| Situation | Test |
+| --- | --- |
+| caesar-mcp started by an outside assistant refuses a job made in Local Studio | `tests/test_mcp.py::test_golden_outside_server_refuses_a_local_studio_job` |
+| A job made with an outside assistant and confirmed in Local Studio reaches prepared | `tests/test_mcp.py::test_golden_outside_job_confirmed_in_local_studio_reaches_prepared` |
+| A model that edits facts.toml to set a confirmed flag ends computed, not confirmed | `tests/test_confirm.py::test_golden_model_edits_facts_toml_to_set_a_flag` |
+| A model that starts its own question socket and calls confirm ends computed, not confirmed (macOS and Linux) | `tests/test_confirm.py::test_golden_model_starts_its_own_listener_and_calls_confirm` |
+
+A confirm round trip through a real Local Studio question card has not been run yet. On Windows, Local Studio has no question socket, so nothing is confirmed there.
+
 caesar also stops, with a plain message and a citation, for each of these golden refusal cases: Form SSA-1099, Form 1099-R, Form 1099-G, taxable interest over the Schedule B threshold, qualified dividends, a W-2 filer with one child who may qualify for the earned income credit, a W-2 filer whose child may qualify them for the earned income credit without being their dependent, and a joint return whose W-2 shows Additional Medicare Tax withheld (two W-2s from one employer) though the wages are under every Form 8959 threshold.
 
 ## Not supported yet

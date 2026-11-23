@@ -379,7 +379,7 @@ def cmd_confirm(job: Job, args) -> int:
     person = K.channel() if job.ctx.can_confirm else K.NoPersonChannel()
     key, why = (None, "") if isinstance(person, K.NoPersonChannel) else keystore.load_key(create=True)
     if isinstance(person, K.NoPersonChannel):
-        where = ("No person channel here: caesar-mcp does not ask through Local Studio's question card yet."
+        where = ("No person channel here: only caesar-mcp's confirm tool, in a Local Studio thread, can ask the person."
                  if job.ctx.can_confirm else "This assistant is outside Local Studio, so it cannot ask the person.")
         lines = ["caesar shows each fact to the person and records only the person's answer.",
                  f"{where} caesar records no confirmation, so the best state this return can reach is: computed, not"
