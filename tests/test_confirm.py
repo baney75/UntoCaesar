@@ -83,6 +83,7 @@ def test_newest_answer_wins(tmp_path):
 def test_a_non_ascii_mac_confirms_nothing_and_breaks_nothing(tmp_path, test_keychain):
     # second-F6: a bad ledger means unconfirmed, never an error.
     path, _ = job_with_facts(tmp_path)
+    keystore.load_key(create=True)  # with no key the ledger is never read
     entry = cli.Job(path).facts()["screen.ssa1099"]
     (path / ledger.NAME).write_text(json.dumps({"entries": [{"fact": "screen.ssa1099", "value": entry["value"],
         "source": entry["source"], "answer": "yes", "by": K.PERSON, "mac": "\u00e9"}]}), encoding="utf-8")
