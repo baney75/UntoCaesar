@@ -54,8 +54,8 @@ def test_status_repeats_the_next_line(job):
     run(job, "new")
     _, ask = run(job, "ask")
     _, status = run(job, "status")
-    assert status.strip().splitlines()[-1] == "NEXT: caesar --job " + str(job) + " ask"
-    assert ask.strip().splitlines()[-1].startswith("NEXT: caesar --job " + str(job) + " set screen.ssa1099 <yes or no>")
+    assert status.strip().splitlines()[-1] == "NEXT: caesar --job " + cli.quote_arg(str(job)) + " ask"
+    assert ask.strip().splitlines()[-1].startswith("NEXT: caesar --job " + cli.quote_arg(str(job)) + " set screen.ssa1099 <yes or no>")
 
 
 @pytest.mark.parametrize("extra", [["--confirmed"], ["--confirmed=yes"], ["--confirm"], ["confirmed=yes"]])
@@ -129,7 +129,7 @@ def test_joint_return_asks_each_business_owner(job):
     answer(job, ("dependents.count", "0"), ("eic.children", "0"), ("w2.count", "0"), ("int1099.count", "0"),
            ("div1099.count", "0"), ("nec1099.count", "0"))
     out = answer(job, ("business.count", "2"))
-    assert out.strip().endswith("NEXT: caesar --job " + str(job) + " ask")
+    assert out.strip().endswith("NEXT: caesar --job " + cli.quote_arg(str(job)) + " ask")
     answer(job, ("business.1.name", "Birch Design"))
     _, out = run(job, "ask")
     assert "set business.1.owner --stdin <<'CAESAR_END'\nvalue: <taxpayer or spouse>\nsource: " in out
