@@ -303,8 +303,8 @@ def cmd_confirm(job: Job, args) -> int:
     answered = {"yes": 0, "no": 0}
     if isinstance(person, K.NoPersonChannel):
         lines = ["caesar shows each fact to the person and records only the person's answer.",
-                 "This build has no person channel: a plugin command cannot open Local Studio's ask-user dialog yet, and the"
-                 " core does not yet guarantee that the person answers it (local-studio#15). So caesar records no"
+                 "This build has no person channel: caesar-mcp, which asks the person through Local Studio's question"
+                 " card (local-studio#8), is not built yet. So caesar records no"
                  " confirmation, and the best state this return can reach is: computed, not confirmed.",
                  f"Facts not confirmed: {len(names)}. The person can review them with caesar facts."]
     else:

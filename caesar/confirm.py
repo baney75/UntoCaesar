@@ -1,9 +1,9 @@
 """The person channel for caesar confirm: the stub of Local Studio's ask-user hook.
 
 Confirmation never goes through the model. caesar confirm shows each fact, its value and its
-source to the person and records only the person's answer. A plugin command cannot open
-Local Studio's ask-user dialog yet, and the core does not yet guarantee that the person, not
-the session's model, answers it (local-studio#15). Until both land:
+source to the person and records only the person's answer. Local Studio's question card now
+guarantees that the person, not the session's model, answers it (local-studio#8), but this build
+has no caesar-mcp yet, the MCP server that asks through it (docs/SPEC.md). Until it lands:
 
 - With no person channel, caesar records no confirmation, and the best state a return
   reaches is "computed, not confirmed".

@@ -391,7 +391,7 @@ def refusals(facts: dict) -> list[str]:
 
 # confirmed is "" (not yet), "yes" or "no" (the person rejected the value). by names who answered,
 # and must be a channel caesar confirm provides. This build has only the eval's scripted person;
-# the person channel joins CONFIRMERS when the core guarantees the person answers (local-studio#15).
+# the person channel joins CONFIRMERS when caesar-mcp asks through Local Studio's card (local-studio#8).
 SCRIPTED = "scripted test person"
 CONFIRMERS = (SCRIPTED,)
 
