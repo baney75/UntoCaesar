@@ -35,6 +35,10 @@ class YearData:
         entry = self.figures[name]
         return self.citation(entry["src"], entry["at"])
 
+    def figure_also(self, name: str) -> list[dict]:
+        """Further citations a figure lists under also, beside its main one."""
+        return [self.citation(x["src"], x["at"]) for x in self.figures[name].get("also", [])]
+
     def line_info(self, line_id: str) -> dict:
         """Label, rule and citation for an output line id such as 1040.16 or se-spouse.12."""
         form, line = line_id.split(".", 1)

@@ -15,11 +15,17 @@ from .engine import Return, dependents, indexes, money, owner_of, whole
 from .yeardata import YearData
 
 
+# Box 6 is withheld paycheck by paycheck in cents, so allow a dollar of rounding before reading
+# box 6 above 1.45% of box 5 as Additional Medicare Tax. This is caesar's margin, not an IRS figure.
+ROUNDING_ALLOWANCE = Decimal(1)
+
+
 @dataclass
 class Finding:
     message: str
     fact: str = ""  # the fact to fix, when there is one
     citation: dict | None = None
+    also: list[dict] = field(default_factory=list)  # further citations for the same rule
 
 
 @dataclass
@@ -138,6 +144,15 @@ def detectors(facts: dict, ret: Return, year: YearData, report: Report) -> None:
         report.refusals.append(Finding(
             "Medicare wages and self-employment income are over the Additional Medicare Tax threshold, so Form 8959 is needed, which caesar v0 does not handle.",
             "", year.figure_citation("additional_medicare_screen")))
+
+    # Additional Medicare Tax withheld, Form 8959 Part V. An employer withholds it on wages over
+    # $200,000 whatever the filing status, so it can show up below every threshold above (two
+    # W-2s from one employer, say). Only Form 8959 line 24 carries it to Form 1040 line 25c.
+    rate = year.fig("additional_medicare_withholding", "medicare_rate")
+    if any(money(facts, f"{w}.box6") > money(facts, f"{w}.box5") * rate + ROUNDING_ALLOWANCE for w in w2s):
+        report.refusals.append(Finding(
+            "A W-2 shows Additional Medicare Tax withheld (box 6 is more than 1.45% of box 5), so Form 8959 is needed to claim it, which caesar v0 does not handle.",
+            "", year.figure_citation("additional_medicare_withholding"), year.figure_also("additional_medicare_withholding")))
 
     # Net investment income tax, Form 8960.
     if line("1040.11b") > year.fig("niit_screen", status) and line("1040.2b") + line("1040.3b") > 0:

@@ -20,6 +20,8 @@ def test_every_figure_has_a_citation():
     for name, entry in YEAR.figures.items():
         assert entry.get("src") in YEAR.sources, name
         assert entry.get("at"), name
+        for more in entry.get("also", []):
+            assert more["src"] in YEAR.sources and more["at"], name
 
 
 def test_every_line_has_a_label_rule_and_citation():

@@ -92,6 +92,16 @@ title = "2025 Instructions for Form 8959, Additional Medicare Tax"
 url = "https://www.irs.gov/pub/irs-prior/i8959--2025.pdf"
 revision = "Aug 7, 2025"
 
+[sources.f8959]
+title = "Form 8959 (2025), Additional Medicare Tax"
+url = "https://www.irs.gov/pub/irs-prior/f8959--2025.pdf"
+revision = "Created 4/30/25, Cat. No. 59475X"
+
+[sources.iw2w3]
+title = "2025 General Instructions for Forms W-2 and W-3"
+url = "https://www.irs.gov/pub/irs-prior/iw2w3--2025.pdf"
+revision = "Feb 19, 2025"
+
 [sources.i8960]
 title = "2025 Instructions for Form 8960, Net Investment Income Tax"
 url = "https://www.irs.gov/pub/irs-prior/i8960--2025.pdf"
@@ -254,6 +264,18 @@ qss = 200000
 employer_withholding_wages = 200000
 src = "i8959"
 at = "Threshold amounts by filing status, and employer withholding on wages over $200,000, page 1"
+
+[figures.additional_medicare_withholding]
+# Used only to detect Additional Medicare Tax withheld on a W-2, which needs Form 8959 Part V.
+# Box 6 holds regular Medicare tax and any Additional Medicare Tax withheld together, and Part V
+# takes box 5 times this rate as the regular part, so box 6 above it is Additional Medicare Tax.
+medicare_rate = "0.0145"
+src = "i8959"
+at = "Part V, Withholding Reconciliation, Line 19 and its Note (Medicare tax and Additional Medicare Tax withholding are reported together on Form W-2, box 6), and Line 24 (include it on Form 1040, line 25c), page 4"
+also = [
+  { src = "f8959", at = "Part V, Withholding Reconciliation, lines 19 to 22: line 21 is box 5 times 1.45% (0.0145), the regular Medicare tax withholding, and line 22, box 6 minus line 21, is the Additional Medicare Tax withholding" },
+  { src = "iw2w3", at = "Specific Instructions for Form W-2, Box 6, Medicare tax withheld: the total employee Medicare tax (including any Additional Medicare Tax) withheld, page 18" },
+]
 
 [figures.niit_screen]
 mfj = 250000

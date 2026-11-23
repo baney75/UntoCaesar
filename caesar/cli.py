@@ -411,8 +411,8 @@ def cmd_check(job: Job, args) -> int:
         lines.append("Stop: this return is outside what caesar v0 can prepare.")
         for f in report.refusals:
             lines.append(f"- {f.message}")
-            if f.citation:
-                lines.append(f"  Rule: {f.citation['source']}, {f.citation['at']} ({f.citation['url']})")
+            for cite in ([f.citation] if f.citation else []) + f.also:
+                lines.append(f"  Rule: {cite['source']}, {cite['at']} ({cite['url']})")
         lines.append("Tell the person in plain words. caesar cannot finish this return.")
     if report.failures:
         lines.append(f"{len(report.failures)} check{'s' if len(report.failures) != 1 else ''} failed:")
