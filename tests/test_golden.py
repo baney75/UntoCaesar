@@ -2,6 +2,7 @@
 
 import json
 import re
+import subprocess
 
 import pytest
 import runner
@@ -18,7 +19,8 @@ def test_suite_has_the_required_cases():
     assert {"single-w2", "mfj-two-children", "hoh-blind-two-dependents", "freelancer-schedule-c",
             "w2-plus-side-business", "refuse-ssa1099", "refuse-1099r", "refuse-1099g", "refuse-schedule-b-interest",
             "refuse-qualified-dividends", "refuse-eic-one-child", "misread-w2-box1", "hostile-payer-name",
-            "refuse-eic-child-not-dependent", "mfj-one-business-each"} <= names
+            "refuse-eic-child-not-dependent", "mfj-one-business-each",
+            "refuse-amt-withheld-two-w2-one-employer"} <= names
 
 
 @pytest.mark.parametrize("folder", CASES, ids=[f.name for f in CASES])
@@ -74,3 +76,40 @@ def test_hostile_payer_name_renders_inert(tmp_path):
     assert "Acme &quot;Payroll&quot; &amp; Co&#x27;s &lt;b&gt;" in page
     assert page.count("Test build: synthetic cases only, not for real records.") >= 1
     assert re.search(r"<(link|iframe|object|embed|base|form)\b", page) is None
+
+
+PWNED = "/tmp/caesar-pwned"
+
+
+def bash(script):
+    return subprocess.run([runner.BASH, "-c", script], capture_output=True).returncode
+
+
+def test_hostile_payer_name_goes_through_bash_byte_for_byte(tmp_path):
+    # second-F7: the runner fills each NEXT set template with the name as it is and runs it in bash.
+    bash(f"rm -f {PWNED}")
+    folder = runner.CASES / "hostile-payer-name"
+    case = json.loads((folder / "input.json").read_text(encoding="utf-8"))
+    rd = case["input"]["return_data"]
+    employer = rd["w2"][0]["employer_name"]["value"]
+    payer = rd["irs1040_scheduleb"]["irs1099_int"][0]["interest_1099int_payer"]["value"]
+    for needle in (f"$(touch {PWNED})", f"`touch {PWNED}`", '"', "'", "\\"):
+        assert needle in employer
+    (tmp_path / "hostile").mkdir()
+    result = runner.run(folder, workdir=tmp_path / "hostile")
+    assert bash(f"test -e {PWNED}") != 0, "a payer name ran a command"
+    facts = runner.cli.Job(result["job"]).facts()
+    assert facts["w2.1.employer"]["value"] == employer
+    assert facts["w2.1.box1"]["source"] == f"W-2 from {employer}, box 1"
+    assert facts["int1099.1.payer"]["value"] == payer
+
+    rd["w2"][0]["employer_name"]["value"] = "Acme Payroll"
+    rd["irs1040_scheduleb"]["irs1099_int"][0]["interest_1099int_payer"]["value"] = "First Bank"
+    twin = tmp_path / "plain-payer-name"
+    twin.mkdir()
+    (twin / "input.json").write_text(json.dumps(case), encoding="utf-8")
+    (tmp_path / "plain").mkdir()
+    plain = runner.run(twin, workdir=tmp_path / "plain")
+    assert result["outcome"] == plain["outcome"] == "prepared"
+    assert result["lines"] == plain["lines"]
+    assert result["state"]["final"] == plain["state"]["final"]
