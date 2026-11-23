@@ -44,7 +44,8 @@ def dollars(value: int) -> str:
     return f"-${-value:,}" if value < 0 else f"${value:,}"
 
 
-def render(ret_doc: dict, facts: dict, year: YearData, banner: str) -> str:
+def render(ret_doc: dict, facts: dict, year: YearData, banner: str, notice: str = "") -> str:
+    """notice, for a job made outside Local Studio, says where its figures go, at the top of the page."""
     e = escape
     parts = [
         "<!doctype html>",
@@ -53,6 +54,7 @@ def render(ret_doc: dict, facts: dict, year: YearData, banner: str) -> str:
         '<meta name="viewport" content="width=device-width, initial-scale=1">',
         f"<title>Tax worksheet {year.year}</title>",
         f"<style>{STYLE}</style></head><body><main>",
+        *([f'<p class="banner">{e(notice)}</p>'] if notice else []),
         f"<h1>Form 1040 worksheet, tax year {year.year}</h1>",
         f'<p class="banner">{e(banner)}</p>',
         f"<p>State: <strong>{e(ret_doc['state'])}</strong>. caesar never files, signs, sends or pays. "

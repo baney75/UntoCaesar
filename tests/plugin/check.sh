@@ -10,12 +10,15 @@ command -v "$py" >/dev/null 2>&1 || py=python
 "$py" - <<'PY'
 import pathlib, re, tomllib
 m = tomllib.loads(pathlib.Path("plugin.toml").read_text(encoding="utf-8"))
-allowed = {"id", "version", "description", "skills", "prompts", "commands", "capabilities"}
+allowed = {"id", "version", "description", "skills", "prompts", "commands", "capabilities", "local_only", "mcp"}
 assert set(m) <= allowed, f"unknown keys: {set(m) - allowed}"
 assert m["id"] == "untocaesar", m["id"]
 assert m["version"] == "0.1.0", m["version"]
 assert "Test build: synthetic cases only, not for real records." in m["description"]
-assert m["capabilities"] == ["ask-user"], m["capabilities"]
+assert m["capabilities"] == ["mcp-server", "ask-user"], m["capabilities"]
+assert m["local_only"] is True, "UntoCaesar must declare local_only"
+assert m["mcp"] == {"command": "bin/caesar-mcp"}, m["mcp"]
+assert pathlib.Path("bin/caesar-mcp").is_file(), "bin/caesar-mcp is missing"
 skills = pathlib.Path(m["skills"])
 assert m["skills"] == "skills/plugin", m["skills"]
 names = {}
@@ -46,7 +49,7 @@ for tier in "SML":
 s = (skills / "untocaesar" / "tiers" / "S.md").read_text(encoding="utf-8")
 steps = re.findall(r"^\d+\. ", s.split("## Steps", 1)[1].split("## ", 1)[0], re.M)
 assert 3 <= len(steps) <= 7, f"tier S needs short numbered steps, found {len(steps)}"
-print(f"ok   plugin.toml: id untocaesar, skills {sorted(names)}, commands {sorted('/' + n for n in cmds)}, capabilities {m['capabilities']}")
+print(f"ok   plugin.toml: id untocaesar, local_only, mcp {m['mcp']['command']}, skills {sorted(names)}, commands {sorted('/' + n for n in cmds)}, capabilities {m['capabilities']}")
 
 bad = []
 for path in sorted(pathlib.Path(".").rglob("*")):
@@ -69,6 +72,14 @@ echo "$out" | tail -1 | tr '\\' / | grep -q "^NEXT: .*bin/caesar.* ask$" || { ec
 out="$(CAESAR_TIER=S "$py" bin/caesar --job "$job" status)"
 echo "$out" | grep -q "^Tier S rules:" || { echo "FAIL caesar status: no tier S rules"; exit 1; }
 echo "ok   caesar runs from the plugin folder with the standard library only: $(echo "$out" | tail -1 | sed 's/.*caesar[^ ]* //')"
+
+reply="$(printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","clientInfo":{"name":"check.sh"}}}' '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' | "$py" bin/caesar-mcp)"
+echo "$reply" | "$py" -c 'import json, sys
+r = [json.loads(line) for line in sys.stdin]
+assert r[0]["result"]["serverInfo"]["name"] == "caesar-mcp", r[0]
+names = sorted(t["name"] for t in r[1]["result"]["tools"])
+assert "caesar_confirm" in names and len(names) == 11, names
+print("ok   caesar-mcp answers initialize and lists", len(names), "tools")' || { echo "FAIL caesar-mcp over stdio"; exit 1; }
 
 if [ -n "${LOCAL_STUDIO:-}" ]; then
   scratch="$(mktemp -d)/untocaesar"

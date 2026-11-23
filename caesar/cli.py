@@ -13,6 +13,7 @@ import os
 import shlex
 import shutil
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 
 from . import __version__
@@ -27,6 +28,17 @@ BANNER = "Test build: synthetic cases only, not for real records."
 DEFAULT_JOB = "caesar-job"
 COUNT_LINES = {"8812.4", "8812.6"}
 SAFETY = "caesar never files, signs, sends or pays. The person does those steps, outside caesar."
+OUTSIDE_NOTICE = "This job's figures go to the assistant you are using and its provider"
+
+
+@dataclass
+class Context:
+    """Who runs caesar. The CLI makes Local Studio jobs; caesar-mcp outside Local Studio makes outside
+    jobs, records the client's name and never confirms (docs/SPEC.md)."""
+
+    origin: str = "local-studio"
+    client: str = ""
+    can_confirm: bool = True
 
 
 class Stop(Exception):
@@ -43,8 +55,9 @@ class Stop(Exception):
 # ---------------------------------------------------------------------------
 
 class Job:
-    def __init__(self, path: Path):
+    def __init__(self, path: Path, ctx: Context | None = None):
         self.path = path
+        self.ctx = ctx or Context()
         self.facts_path = path / "facts.toml"
         self.state_path = path / "state.json"
         self.return_path = path / "return.json"
@@ -66,6 +79,9 @@ class Job:
 
     def facts(self) -> dict:
         return F.load(self.facts_path)
+
+    def outside(self) -> bool:
+        return self.state().get("origin") == "outside"
 
     def save_facts(self, facts: dict) -> None:
         F.save(self.facts_path, facts, self.year().year)
@@ -97,14 +113,16 @@ def full_hash(facts: dict) -> str:
 # NEXT
 # ---------------------------------------------------------------------------
 
-def prog(job: Job) -> str:
+def prog(job: Job, absolute: bool = False) -> str:
     base = os.environ.get("CAESAR_CMD")
     if not base:
         if shutil.which("caesar"):
             base = "caesar"
         else:
             base = ("python" if os.name == "nt" else "python3") + " -m caesar"
-    if job.path.resolve() != (Path.cwd() / DEFAULT_JOB).resolve():
+    if absolute:
+        base += " --job " + quote_arg(str(job.path.resolve()))
+    elif job.path.resolve() != (Path.cwd() / DEFAULT_JOB).resolve():
         base += " --job " + quote_arg(str(job.path))
     return base
 
@@ -200,7 +218,8 @@ def emit(job: Job, lines: list[str], step: str | None = "auto") -> None:
     print(BANNER)
     for line in lines:
         print(line)
-    print(f"NEXT: {prog(job)} {step}" if step else "NEXT: none")
+    # confirm runs as caesar-mcp's tool, whose working folder is not the model's, so it names the job in full.
+    print(f"NEXT: {prog(job, absolute=step == 'confirm')} {step}" if step else "NEXT: none")
 
 
 def return_state(facts: dict, check: dict | None) -> str:
@@ -227,7 +246,10 @@ def cmd_new(job: Job, args) -> int:
     year = yeardata.load(args.year)
     job.path.mkdir(parents=True, exist_ok=True)
     (job.path / "documents").mkdir(exist_ok=True)
-    job.save_state({"year": year.year})
+    state = {"year": year.year, "origin": job.ctx.origin}
+    if job.ctx.client:
+        state["clients"] = [job.ctx.client]
+    job.save_state(state)
     job.save_facts({})
     emit(job, [f"Started a tax year {year.year} job at {job.path}.",
                "Put the person's documents in its documents folder. They never leave this computer through caesar.",
@@ -339,13 +361,15 @@ def cmd_confirm(job: Job, args) -> int:
     for name in names:
         if name not in facts:
             raise Stop([f"There is no fact named {name} to confirm."])
-    person = K.channel(facts)
+    person = K.channel(facts) if job.ctx.can_confirm else K.NoPersonChannel()
     answered = {"yes": 0, "no": 0}
     if isinstance(person, K.NoPersonChannel):
+        where = ("No person channel here: caesar-mcp does not ask through Local Studio's question card yet."
+                 if job.ctx.can_confirm else "This assistant is outside Local Studio, so it cannot ask the person.")
         lines = ["caesar shows each fact to the person and records only the person's answer.",
-                 "This build has no person channel: caesar-mcp, which asks the person through Local Studio's question"
-                 " card (local-studio#8), is not built yet. So caesar records no"
-                 " confirmation, and the best state this return can reach is: computed, not confirmed.",
+                 f"{where} caesar records no confirmation, so the best state this return can reach is: computed, not"
+                 " confirmed. The person confirms these facts in Local Studio, on the desktop or the phone, by running"
+                 f" /taxes there with this job: {job.path.resolve()}",
                  f"Facts not confirmed: {len(names)}. The person can review them with caesar facts."]
     else:
         for name in names:
@@ -474,7 +498,11 @@ def cmd_worksheet(job: Job, args) -> int:
         return 1
     state = job.state()
     doc["state"] = return_state(facts, state.get("check"))
-    write(job.worksheet_path, W.render(doc, facts, job.year(), BANNER))
+    notice = ""
+    if state.get("origin") == "outside":
+        clients = ", ".join(state.get("clients", [])) or "unknown"
+        notice = f"{OUTSIDE_NOTICE}. Assistant: {clients}."
+    write(job.worksheet_path, W.render(doc, facts, job.year(), BANNER, notice))
     state["worksheet_hash"] = full_hash(facts)
     job.save_state(state)
     emit(job, [f"Wrote {job.worksheet_path}. Open it in a browser to read every line, its rule, its source and its inputs."])
@@ -574,7 +602,7 @@ COMMANDS = {"new": cmd_new, "status": cmd_status, "ask": cmd_ask, "set": cmd_set
             "worksheet": cmd_worksheet, "done": cmd_done}
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: list[str] | None = None, ctx: Context | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
@@ -586,7 +614,7 @@ def main(argv: list[str] | None = None) -> int:
         print("NEXT: none")
         return 2
     args = parser().parse_args(argv)
-    job = Job(Path(args.job))
+    job = Job(Path(args.job), ctx)
     command = args.command or "status"
     try:
         return COMMANDS[command](job, args)

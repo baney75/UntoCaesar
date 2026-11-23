@@ -1,0 +1,18 @@
+#!/usr/bin/env python3
+"""Run caesar-mcp, the stdio MCP server, from the plugin folder without installing it."""
+
+import os
+import shlex
+import sys
+from pathlib import Path
+
+HERE = Path(__file__).resolve()
+sys.path.insert(0, str(HERE.parent.parent))
+# NEXT lines name the caesar launcher beside this one, so the model can run them with bash.
+CAESAR = HERE.with_name("caesar")
+if "CAESAR_CMD" not in os.environ:
+    os.environ["CAESAR_CMD"] = f'python "{CAESAR}"' if os.name == "nt" else "python3 " + shlex.quote(str(CAESAR))
+
+from caesar.mcp import main  # noqa: E402
+
+sys.exit(main())

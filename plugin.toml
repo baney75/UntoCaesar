@@ -2,7 +2,8 @@ id = "untocaesar"
 version = "0.1.0"
 description = "UntoCaesar for Local Studio: prepare a federal Form 1040 for tax year 2025 with a local model, where the caesar CLI does every number and shows its work. Test build: synthetic cases only, not for real records."
 skills = "skills/plugin"
-capabilities = ["ask-user"]
+capabilities = ["mcp-server", "ask-user"]
+local_only = true
 
 [[commands]]
 name = "taxes"
@@ -13,3 +14,6 @@ skill = "untocaesar"
 name = "taxes-explain"
 description = "Explain a line of the return or an IRS notice in plain words"
 skill = "untocaesar-explain"
+
+[mcp]
+command = "bin/caesar-mcp"
