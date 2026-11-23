@@ -64,7 +64,7 @@
           },
           "employer_name": {
             "label": "Employer's name",
-            "value": "Acme \"Payroll\" & Co's <b>"
+            "value": "Acme \"Payroll\" & Co's <b> $(touch /tmp/caesar-pwned) `touch /tmp/caesar-pwned` C:\\new\\table"
           },
           "wages": {
             "label": "Box 1",
@@ -117,7 +117,7 @@
             },
             "interest_1099int_payer": {
               "label": "Payer's name",
-              "value": "<img src=https://x/?d=1><script>alert(1)</script>"
+              "value": "<img src=https://x/?d=1><script>alert(1)</script> '$(touch /tmp/caesar-pwned)' \\\"; touch /tmp/caesar-pwned"
             },
             "interest_1099int_interest": {
               "label": "Box 1",
@@ -150,7 +150,7 @@
     }
   },
   "untocaesar": {
-    "hostile": "<img src=https://x/?d=1><script>alert(1)</script>",
+    "hostile": "<img src=https://x/?d=1><script>alert(1)</script> '$(touch /tmp/caesar-pwned)' \\\"; touch /tmp/caesar-pwned",
     "anchors": [
       "i1040 2025, Tax Table, pages 68 to 79 (row looked up from the IRS PDF): single, $36,550 to $36,600 is $4,151"
     ]
