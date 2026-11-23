@@ -3,7 +3,7 @@
 v0's scope is an allowlist. caesar rejects a fact this module does not list, and any answer
 that puts the return outside v0 is a refusal. Facts live in <job>/facts.toml, each with a
 value, where it came from (a document and box, or the person's answer) and whether the
-person confirmed it. Only caesar confirm writes the confirmation (see confirm.py).
+person confirmed it. That flag only mirrors the signed ledger (ledger.py): caesar never reads it.
 """
 
 from __future__ import annotations
@@ -389,11 +389,10 @@ def refusals(facts: dict) -> list[str]:
 # facts.toml
 # ---------------------------------------------------------------------------
 
-# confirmed is "" (not yet), "yes" or "no" (the person rejected the value). by names who answered,
-# and must be a channel caesar confirm provides. This build has only the eval's scripted person;
-# the person channel joins CONFIRMERS when caesar-mcp asks through Local Studio's card (local-studio#8).
+# confirmed is "" (not yet), "yes" or "no" (the person rejected the value), and by names who answered.
+# Both are copied from the signed ledger on every load (ledger.py), so an edit to facts.toml changes nothing.
 SCRIPTED = "scripted test person"
-CONFIRMERS = (SCRIPTED,)
+PERSON = "the person, in Local Studio"
 
 
 def load(path: Path) -> dict:
@@ -401,15 +400,8 @@ def load(path: Path) -> dict:
         return {}
     with path.open("rb") as f:
         data = tomllib.load(f)
-    facts = {name: {"value": str(e["value"]), "source": str(e.get("source", "")),
-                    "confirmed": str(e.get("confirmed", "")), "by": str(e.get("by", ""))}
-             for name, e in data.get("facts", {}).items()}
-    for name, e in facts.items():
-        if (e["confirmed"], e["by"]) != ("", "") and (e["confirmed"] not in ("yes", "no") or e["by"] not in CONFIRMERS):
-            raise ValueError(f"facts.toml marks {name} as confirmed = {e['confirmed']!r} by {e['by']!r}, but only caesar"
-                             " confirm records a confirmation, and in this build only for the eval's scripted test person."
-                             " caesar will not use this job. Start a new job")
-    return facts
+    return {name: {"value": str(e["value"]), "source": str(e.get("source", "")), "confirmed": "", "by": ""}
+            for name, e in data.get("facts", {}).items()}
 
 
 def save(path: Path, facts: dict, year: int) -> None:

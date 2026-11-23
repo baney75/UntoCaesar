@@ -10,6 +10,7 @@ import argparse
 import hashlib
 import json
 import os
+import secrets
 import shlex
 import shutil
 import sys
@@ -21,6 +22,8 @@ from . import checks as C
 from . import confirm as K
 from . import engine as E
 from . import facts as F
+from . import keystore
+from . import ledger
 from . import worksheet as W
 from . import yeardata
 
@@ -78,7 +81,17 @@ class Job:
         return yeardata.load(int(self.state().get("year", 2025)))
 
     def facts(self) -> dict:
-        return F.load(self.facts_path)
+        """The facts, each confirmed or rejected only as the signed ledger says (ledger.py)."""
+        facts = F.load(self.facts_path)
+        ledger.apply(facts, self.path, self.state().get("id", ""))
+        return facts
+
+    def job_id(self) -> str:
+        state = self.state()
+        if not state.get("id"):
+            state["id"] = secrets.token_hex(16)
+            self.save_state(state)
+        return state["id"]
 
     def outside(self) -> bool:
         return self.state().get("origin") == "outside"
@@ -248,7 +261,7 @@ def cmd_new(job: Job, args) -> int:
     year = yeardata.load(args.year)
     job.path.mkdir(parents=True, exist_ok=True)
     (job.path / "documents").mkdir(exist_ok=True)
-    state = {"year": year.year, "origin": job.ctx.origin}
+    state = {"year": year.year, "id": secrets.token_hex(16), "origin": job.ctx.origin}
     if job.ctx.client:
         state["clients"] = [job.ctx.client]
     job.save_state(state)
@@ -363,8 +376,8 @@ def cmd_confirm(job: Job, args) -> int:
     for name in names:
         if name not in facts:
             raise Stop([f"There is no fact named {name} to confirm."])
-    person = K.channel(facts) if job.ctx.can_confirm else K.NoPersonChannel()
-    answered = {"yes": 0, "no": 0}
+    person = K.channel() if job.ctx.can_confirm else K.NoPersonChannel()
+    key, why = (None, "") if isinstance(person, K.NoPersonChannel) else keystore.load_key(create=True)
     if isinstance(person, K.NoPersonChannel):
         where = ("No person channel here: caesar-mcp does not ask through Local Studio's question card yet."
                  if job.ctx.can_confirm else "This assistant is outside Local Studio, so it cannot ask the person.")
@@ -373,18 +386,30 @@ def cmd_confirm(job: Job, args) -> int:
                  " confirmed. The person confirms these facts in Local Studio, on the desktop or the phone, by running"
                  f" /taxes there with this job: {job.path.resolve()}",
                  f"Facts not confirmed: {len(names)}. The person can review them with caesar facts."]
+    elif key is None:
+        # Asking the person when their answer cannot be signed would only waste their time.
+        lines = [f"No keychain: {why}. caesar signs each confirmation with a key kept in the OS keychain, so without one"
+                 " it records nothing and every fact stays unconfirmed. The best state this return can reach is:"
+                 " computed, not confirmed."]
     else:
+        answers = []
         for name in names:
             answer = person.ask(name, K.question(name, facts[name]))
-            if answer in ("yes", "no"):
-                facts[name]["confirmed"] = answer
-                facts[name]["by"] = person.name
-                answered[answer] += 1
-        job.save_facts(facts)
-        lines = [f"Asked the {person.name} about {len(names)} facts: {answered['yes']} confirmed, {answered['no']} rejected."]
-        rejected = [n for n in names if facts[n]["confirmed"] == "no"]
-        if rejected:
-            lines.append("Rejected (read the document again and set the right value): " + ", ".join(rejected) + ".")
+            if answer is None:
+                break
+            answers.append((name, facts[name], answer))
+        if answers:
+            ledger.record(job.path, key, job.job_id(), answers, person.name)
+        facts = job.facts()
+        yes = sum(1 for _, _, a in answers if a == "yes")
+        lines = [f"Asked {person.name} about {len(answers)} of {len(names)} facts: {yes} confirmed,"
+                 f" {len(answers) - yes} rejected."]
+        if len(answers) < len(names):
+            lines.append(f"Not confirmed: {len(names) - len(answers)} facts ({person.why}).")
+        rejected_now = [n for n, _, a in answers if a == "no"]
+        if rejected_now:
+            lines.append("Rejected (read the document again and set the right value): " + ", ".join(rejected_now) + ".")
+    job.save_facts(facts)
     state = job.state()
     if isinstance(person, K.NoPersonChannel):
         state.setdefault("unasked", {})[job.ctx.origin] = content_hash(facts)

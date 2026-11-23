@@ -127,7 +127,7 @@ def test_local_studio_server_needs_a_full_path(root):
     assert failed and "full path" in out
 
 
-def test_outside_job_shows_where_its_figures_go(root):
+def test_golden_outside_job_confirmed_in_local_studio_reaches_prepared(root):
     folder = runner.CASES / "single-w2"
     path = root / "my-2025"
     assistant = outside(root, client="Grok Bot")
@@ -138,14 +138,24 @@ def test_outside_job_shows_where_its_figures_go(root):
     assert final(path) == "computed, not confirmed"
     page = (path / "worksheet.html").read_text(encoding="utf-8")
     assert page.index(ON_PAGE) < page.index("<h1>") and "Assistant: Grok Bot." in page
-    # Opened in Local Studio, the job stays marked outside.
-    call(local(root), "facts", job=str(path))
-    state = json.loads((path / "state.json").read_text(encoding="utf-8"))
-    assert state["origin"] == "outside" and state["clients"] == ["Grok Bot"]
+    assert not any("never leave this computer" in r for r in replies)
     # The outside server asked nobody, so Local Studio still offers confirm.
     status, _ = call(local(root), "status", job=str(path))
     assert status.strip().splitlines()[-1].endswith(" confirm")
-    assert not any("never leave this computer" in r for r in replies)
+
+    truth = to_facts.truth(to_facts.load(folder))["facts"]
+    with runner.scripted_person(truth, path):
+        out, failed = call(local(root), "confirm", job=str(path))
+        assert not failed and " 0 rejected" in out, out
+        replies = drive(assistant, "my-2025", path, folder)
+        assert runner.cli.Job(path).facts()["w2.1.box1"]["confirmed"] == "yes"
+    assert final(path).startswith("prepared for the eval")
+    state = json.loads((path / "state.json").read_text(encoding="utf-8"))
+    assert state["origin"] == "outside" and state["clients"] == ["Grok Bot"]
+    page = (path / "worksheet.html").read_text(encoding="utf-8")
+    assert page.index(ON_PAGE) < page.index("<h1>")
+    # Without the run's key the same ledger confirms nothing.
+    assert runner.cli.Job(path).facts()["w2.1.box1"]["confirmed"] == ""
 
 
 def test_notice_comes_once_per_job(root):
