@@ -360,8 +360,10 @@ def parse_json(text: str) -> dict | None:
 def baseline_run(folder: Path, k: int, driver, args, out: Path) -> dict:
     started = time.time()
     prompt = baseline_prompt(folder)
+    answered_by = None
     try:
-        reply = driver.chat([{"role": "user", "content": prompt}], None)["content"]
+        answer = driver.chat([{"role": "user", "content": prompt}], None)
+        reply, answered_by = answer["content"], answer.get("model")
     except drivers.QuotaStop:
         raise
     except Exception as err:
@@ -381,6 +383,8 @@ def baseline_run(folder: Path, k: int, driver, args, out: Path) -> dict:
     rec: dict = {"expected_outcome": want["outcome"], "outcome": "refused" if refused else "answered" if lines else "no answer",
                  "network": {"traced": False, "connections": 0, "why": "baseline: no plugin code runs"},
                  "seconds": round(time.time() - started, 1)}
+    if answered_by:
+        rec["answered_by"] = answered_by
     if want["outcome"] == "refused":
         rec["refusal_correct"] = refused
         rec["exact"] = refused

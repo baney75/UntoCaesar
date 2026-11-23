@@ -115,7 +115,7 @@ class ClaudeDriver:
             raise QuotaStop(text[:500])
         if reply.get("is_error"):
             raise RuntimeError(text[:500])
-        return {"content": text, "tool_calls": []}
+        return {"content": text, "tool_calls": [], "model": ",".join(reply.get("modelUsage") or {}) or None}
 
 
 # ---------------------------------------------------------------------------

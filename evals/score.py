@@ -61,7 +61,7 @@ def table(meta: dict, records: list[dict], judged: dict) -> tuple[list[tuple[str
         ("Form 1040 lines, strict / within $5", f"{strict} / {lenient} of {lines}", "for reference", None),
         ("Silent errors", f"{silent}", "0", silent == 0),
         ("Refusals stopped right", f"{ref_ok} of {ref_runs} runs ({len(refusals)} cases)", "every run",
-         ref_runs > 0 and ref_ok == ref_runs),
+         ref_ok == ref_runs if ref_runs else None),
     ]
     if plugin:
         rows.append(("Network connections (traced)", f"{conns}" if traced else f"{conns}, not traced in every run",
