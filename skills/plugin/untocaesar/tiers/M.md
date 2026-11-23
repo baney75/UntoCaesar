@@ -22,7 +22,7 @@ explain caesar's results in plain words.
 ## Steps
 1. caesar status, then follow NEXT.
 2. For each question, ask the person, or read the box from the form in the job's documents folder.
-3. Write the answer with the caesar set line NEXT shows. Money is digits only: 52000.50. For example:
+3. Write the answer with the caesar set line NEXT shows. Copy amounts as printed; caesar reads 52,000.50 and $52,000. For example:
    caesar set w2.1.box2 --stdin <<'CAESAR_END'
    value: 4800
    source: W-2 from Acme "Payroll" & Co's, box 2
