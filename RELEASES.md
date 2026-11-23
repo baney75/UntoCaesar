@@ -13,7 +13,7 @@ Unto Caesar ships as a Local Studio plugin from a git tree, so each channel is a
 ## How a change reaches users
 
 1. Work merges into `main` by pull request with CI green. That is dev.
-2. No nightly or stable ships until the core enforces `local_only` with network off for the session's tools, a person-only `ask-user` dialog and encrypted plugin storage (docs/SPEC.md, "Capabilities it asks for"); until then `main` is a dev build for synthetic cases only.
+2. No nightly or stable ships until the plugin declares `local_only`, `confirm` uses the person-only question card, the session's tools run in the sandbox (local-studio#33: no network, no write to the job folder, no process launch as the plugin, no access to the plugin's keychain item), and the job folder is in encrypted plugin storage (local-studio#7) (docs/SPEC.md, "Capabilities it asks for"); until then `main` is a dev build for synthetic cases only.
 3. Each day `main` becomes nightly when CI and the tier evals in [docs/SPEC.md](docs/SPEC.md#tier-evals) pass and no open issue is labeled `regression` and `blocks-nightly`.
 4. A nightly is promoted to stable after 72 hours on nightly with no open regression, every TESTING.md check passing for every supported model, and plain release notes. `stable` fast-forwards to it and it is tagged `vX.Y.Z`.
 5. Hotfixes go to `stable` by pull request with a check that fails before the fix, then merge back into `main` the same day.
