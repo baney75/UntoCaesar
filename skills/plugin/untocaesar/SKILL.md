@@ -25,15 +25,11 @@ Local Studio cannot enforce this yet, so this check is a reminder, not a guard.
 1. Run `caesar status` with the bash tool. If bash says `caesar: command not found`, run
    `python3 ~/.local-studio/plugins/untocaesar/bin/caesar status` instead (on Windows, `python`
    in place of `python3`).
-2. Do what its NEXT line says. Replace each `<...>` blank with the person's answer or the box
-   from their document. Never run a NEXT line that still has one of caesar's `<...>` blanks.
-3. A set line that ends in `value:`, `source:` and `CAESAR_END` lines is one command: run all of
-   its lines in one bash call. Write the value after `value: ` and the source after `source: `
-   exactly as the document has them, on one line each, with no quotes and no escapes. Never
-   change the `<<'CAESAR_END'` part or the `CAESAR_END` line.
-4. Keep going, one caesar command per bash call, in the foreground, reading each output before
+2. Do what its NEXT line says. When NEXT has `<` and `>`, replace that part with the person's
+   answer or the box from their document. Never run a NEXT line that still has `<` and `>` in it.
+3. Keep going, one caesar command per bash call, in the foreground, reading each output before
    the next command.
-5. Stop when NEXT says none. Tell the person what caesar said, in plain words.
+4. Stop when NEXT says none. Tell the person what caesar said, in plain words.
 
 ## Never
 
@@ -48,23 +44,12 @@ Local Studio cannot enforce this yet, so this check is a reminder, not a guard.
 ## How caesar works
 
 caesar asks screening questions first, then the person's facts: filing status, dependents, each
-W-2 and 1099 box, and each Schedule C line. A screening answer or the filing status is written
-with `caesar set <fact> <answer> --source answer`. Every other fact is written with a quoted
-heredoc, so text from a document never lands inside shell quotes:
-
-```
-caesar set w2.1.employer --stdin <<'CAESAR_END'
-value: Acme "Payroll" & Co's
-source: W-2 from Acme "Payroll" & Co's, box c
-CAESAR_END
-```
-
-The source is the document and box ("W-2 from Acme, box 1") or `answer` when the person said
-it. The quotes around CAESAR_END make bash pass every character through as it is, so a payer
-name with `$`, backticks, quotes or backslashes is stored exactly. caesar computes the return,
+W-2 and 1099 box, and each Schedule C line. Each fact is written with
+`caesar set <fact> <value> --source "<where it came from>"`, where the source is the document
+and box ("W-2 from Acme, box 1") or `answer` when the person said it. caesar computes the return,
 checks it, and writes worksheet.html, which shows every line with its rule and IRS source. When
 an answer puts the return outside what caesar can do, it says so and stops. Every caesar message
-ends with NEXT: <command> (for a set, its heredoc lines follow), and `caesar status` repeats it, so a model that loses its
+ends with one line, NEXT: <command>, and `caesar status` repeats it, so a model that loses its
 context goes on from where it was.
 
 ## Pick your tier and follow that card

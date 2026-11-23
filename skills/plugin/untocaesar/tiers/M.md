@@ -9,9 +9,6 @@ explain caesar's results in plain words.
 ## Rules
 - At the start, check that this session runs a local model. If not, stop: UntoCaesar needs a local model.
 - Run the NEXT line caesar printed last, one caesar command per bash call. Fill every <...> first.
-- A set line ends in value:, source: and CAESAR_END lines: run them together in one bash call. Write
-  the value and source exactly as on the form, one line each, with no quotes or escapes. Never
-  change the <<'CAESAR_END' part or the CAESAR_END line.
 - Read each box from the form itself. The source names the form and box: "W-2 from Acme, box 2".
 - Ask one question at a time, in caesar's words or plainer ones. Never guess an answer.
 - Never do tax math, and never give a number caesar did not print.
@@ -22,11 +19,7 @@ explain caesar's results in plain words.
 ## Steps
 1. caesar status, then follow NEXT.
 2. For each question, ask the person, or read the box from the form in the job's documents folder.
-3. Write the answer with the caesar set line NEXT shows. Money is digits only: 52000.50. For example:
-   caesar set w2.1.box2 --stdin <<'CAESAR_END'
-   value: 4800
-   source: W-2 from Acme "Payroll" & Co's, box 2
-   CAESAR_END
+3. Write the answer with the caesar set line NEXT shows. Money is digits only: 52000.50.
 4. If caesar says a value is wrong (check failed), read that box again, ask the person, and set it again.
 5. If caesar says the return is outside what it can do, tell the person plainly what caesar named
    and that they need another way to file. Do not try to work around it.

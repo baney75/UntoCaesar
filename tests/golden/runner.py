@@ -1,10 +1,8 @@
 """Run a golden case through caesar the way the skill does, and score it.
 
-The runner follows caesar's NEXT: lines the way a model does. It runs each one through bash -c,
-and when NEXT is a caesar set template it fills each <...> with the case's value and source
-(tests/golden/to_facts.py) as they are, with no escaping, so the shell path is what is tested. It
-stops at NEXT: none or at a set for a fact already answered (a fix only a person can make). The
-scripted person answers caesar confirm from the case's true values. Scoring follows TaxCalcBench: each Form 1040 line
+The runner sets each fact from the case (tests/golden/to_facts.py), then runs whatever each
+NEXT: line says until caesar says NEXT: none or asks for a fact. The scripted person answers
+caesar confirm from the case's true values. Scoring follows TaxCalcBench: each Form 1040 line
 in output.xml is scored strict (exact) and lenient (within $5).
 
 Usage: python3 tests/golden/runner.py [case folder ...]   prints a score table.
@@ -16,10 +14,7 @@ import contextlib
 import io
 import json
 import os
-import re
 import shlex
-import shutil
-import subprocess
 import sys
 import tempfile
 import xml.etree.ElementTree as ET
@@ -47,61 +42,21 @@ def case_folders() -> list[Path]:
     return sorted(p for p in CASES.iterdir() if (p / "input.json").exists())
 
 
-BASH = shutil.which("bash")
-# In the bash that runs a NEXT line, caesar is a function that records the argv and stdin bash
-# hands it. Every expansion, quote and heredoc is bash's own; the runner then calls cli.main with
-# exactly those arguments and that input, in this process, which keeps the suite fast.
-SHIM = 'caesar() { printf "%s\\0" "$@" > "$CAESAR_ARGV"; IFS= read -r -d "" input; printf "%s" "$input" > "$CAESAR_STDIN"; }\n'
-HOLE = re.compile(r"<[a-z][^<>\n]*>")
-
-
-def shell(job: Path, command: str) -> tuple[int, str]:
-    """Run one caesar command line through bash -c, as a model's bash tool does."""
-    assert BASH, "the golden runner needs bash on PATH"
-    argv_file, stdin_file = job.parent / "argv.bin", job.parent / "stdin.bin"
-    for f in (argv_file, stdin_file):
-        f.unlink(missing_ok=True)
-    env = dict(os.environ, CAESAR_ARGV=str(argv_file), CAESAR_STDIN=str(stdin_file))
-    done = subprocess.run([BASH, "-c", SHIM + command], env=env, stdin=subprocess.DEVNULL, capture_output=True)
-    if done.returncode != 0 or not argv_file.exists():
-        return 2, f"bash failed ({done.returncode}): {done.stderr.decode(errors='replace')}"
-    argv = [a.decode("utf-8") for a in argv_file.read_bytes().split(b"\0")[:-1]]
-    data = stdin_file.read_bytes() if stdin_file.exists() else b""
+def caesar(job: Path, *args: str) -> tuple[int, str]:
     buf = io.StringIO()
-    saved = sys.stdin
-    sys.stdin = io.TextIOWrapper(io.BytesIO(data), encoding="utf-8")
-    try:
-        with contextlib.redirect_stdout(buf):
-            code = cli.main(argv)
-    finally:
-        sys.stdin = saved
+    with contextlib.redirect_stdout(buf):
+        code = cli.main(["--job", str(job), *args])
     return code, buf.getvalue()
 
 
-def caesar(job: Path, *args: str) -> tuple[int, str]:
-    return shell(job, " ".join(shlex.quote(a) for a in ("caesar", "--job", str(job), *args)))
-
-
-def next_command(output: str, job: Path) -> str | None:
-    """The NEXT: command after the program and job, which for a set may run on to a heredoc."""
-    head, sep, step = output.rpartition("\nNEXT: ")
-    assert sep, output
-    step = step.rstrip("\n")
-    if step == "none":
+def next_command(output: str, job: Path) -> list[str] | None:
+    line = output.strip().splitlines()[-1]
+    assert line.startswith("NEXT: "), output
+    words = shlex.split(line[len("NEXT: "):]) if os.name != "nt" else line[len("NEXT: "):].split()
+    if words == ["none"]:
         return None
-    prefix = f"caesar --job {shlex.quote(str(job))} "
-    assert step.startswith(prefix), step
-    return step[len(prefix):]
-
-
-def fill(template: str, value: str, source: str) -> str:
-    """Fill a set template's <...> holes in order, value then source, with the text as it is."""
-    holes = HOLE.findall(template)
-    assert 1 <= len(holes) <= 2, template
-    if len(holes) == 1:
-        assert source == "answer", (template, source)  # the template's own fixed source
-    texts = iter([value, source])
-    return HOLE.sub(lambda m: next(texts), template)
+    assert words[:3] == ["caesar", "--job", str(job)], line
+    return words[3:]
 
 
 def run(folder: Path, scripted: bool = True, workdir: Path | None = None) -> dict:
@@ -116,34 +71,24 @@ def run(folder: Path, scripted: bool = True, workdir: Path | None = None) -> dic
     saved = {k: os.environ.get(k) for k in ("CAESAR_CMD", "CAESAR_SCRIPTED_PERSON")}
     os.environ.pop("CAESAR_SCRIPTED_PERSON", None)
     os.environ.update(env)
-    given = to_facts.all_facts(case)
     transcript = []
     try:
-        code, out = caesar(job, "new")
-        transcript.append(("new", code, out))
+        transcript.append(("new", *caesar(job, "new")))
         refused_at = ""
-        for _ in range(1000):
-            step = next_command(out, job)
-            if step is None:
-                break
-            words = step.split()
-            if words[0] == "set":
-                name = words[1]
-                answered = to_facts.F.value(cli.Job(job).facts(), name) is not None
-                if answered or name not in given:
-                    break
-                step = fill(step, *given[name])
-                label = f"set {name}"
-            else:
-                label = step
-            code, out = shell(job, f"caesar --job {shlex.quote(str(job))} {step}")
-            transcript.append((label, code, out))
+        for name, value, source in to_facts.convert(case):
+            code, out = caesar(job, "set", name, value, "--source", source)
+            transcript.append((f"set {name}", code, out))
             # A model follows NEXT, so a set that ends in NEXT: none stops the interview.
-            if words[0] == "set" and (code == 1 or out.strip().endswith("NEXT: none")):
+            if code == 1 or out.strip().endswith("NEXT: none"):
                 refused_at = "set"
                 break
-        else:
-            raise AssertionError("caesar never said NEXT: none")
+        for _ in range(40):
+            code, out = caesar(job, "status")
+            command = next_command(out, job)
+            if command is None or command[0] == "set":
+                break
+            code, out = caesar(job, *command)
+            transcript.append((" ".join(command), code, out))
     finally:
         for k, val in saved.items():
             if val is None:
