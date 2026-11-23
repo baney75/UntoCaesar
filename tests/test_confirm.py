@@ -152,6 +152,21 @@ def test_refused_cancelled_or_odd_answers_confirm_nothing(studio, tmp_path, answ
     assert "Asked the person, in Local Studio about 0 of 2 facts" in out
     assert set(states(path).values()) == {""}
     assert not (path / ledger.NAME).exists()
+    # first-F1: a stop leaves confirm the next step for when the person is ready, without asking again at once.
+    assert out.strip().endswith("NEXT: none")
+    status = server.handle({"jsonrpc": "2.0", "id": 2, "method": "tools/call",
+                            "params": {"name": "caesar_status", "arguments": {"job": str(path)}}})
+    assert status["result"]["content"][0]["text"].strip().endswith(" confirm")
+
+
+def test_confirm_run_in_bash_does_not_block_the_confirm_tool(tmp_path):
+    # first-F3: the model's bash has no question channel; its confirm must not close Local Studio's.
+    path, _ = job_with_facts(tmp_path)
+    code, out = runner.caesar(path, "confirm")
+    assert code == 0 and "caesar_confirm tool again" in out and out.strip().endswith("NEXT: none")
+    assert "unasked" not in cli.Job(path).state() and "confirm_hash" not in cli.Job(path).state()
+    code, out = runner.caesar(path, "status")
+    assert out.strip().endswith(" confirm")
 
 
 @needs_unix

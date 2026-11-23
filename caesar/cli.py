@@ -378,6 +378,7 @@ def cmd_confirm(job: Job, args) -> int:
             raise Stop([f"There is no fact named {name} to confirm."])
     person = K.channel() if job.ctx.can_confirm else K.NoPersonChannel()
     key, why = (None, "") if isinstance(person, K.NoPersonChannel) else keystore.load_key(create=True)
+    answers = []
     if isinstance(person, K.NoPersonChannel):
         where = ("No person channel here: only caesar-mcp's confirm tool, in a Local Studio thread, can ask the person."
                  if job.ctx.can_confirm else "This assistant is outside Local Studio, so it cannot ask the person.")
@@ -392,7 +393,6 @@ def cmd_confirm(job: Job, args) -> int:
                  " it records nothing and every fact stays unconfirmed. The best state this return can reach is:"
                  " computed, not confirmed."]
     else:
-        answers = []
         for name in names:
             answer = person.ask(name, K.question(name, facts[name]))
             if answer is None:
@@ -411,12 +411,20 @@ def cmd_confirm(job: Job, args) -> int:
             lines.append("Rejected (read the document again and set the right value): " + ", ".join(rejected_now) + ".")
     job.save_facts(facts)
     state = job.state()
-    if isinstance(person, K.NoPersonChannel) or key is None:  # nobody was asked
+    step = "auto"
+    if not job.ctx.can_confirm:
+        # An outside server never asks; this moves its own run on, and Local Studio still offers confirm.
         state.setdefault("unasked", {})[job.ctx.origin] = content_hash(facts)
+    elif len(answers) < len(names):
+        # No channel, no keychain, or the person stopped: record nothing, so confirm stays the next step,
+        # and stop here rather than show the cards again at once.
+        lines.append("When the person is ready, call the caesar_confirm tool again with this job. Answers already"
+                     " given are kept.")
+        step = None
     else:
         state["confirm_hash"] = content_hash(facts)
     job.save_state(state)
-    emit(job, lines)
+    emit(job, lines, step)
     return 0
 
 
