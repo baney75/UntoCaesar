@@ -152,21 +152,22 @@ def test_refused_cancelled_or_odd_answers_confirm_nothing(studio, tmp_path, answ
     assert "Asked the person, in Local Studio about 0 of 2 facts" in out
     assert set(states(path).values()) == {""}
     assert not (path / ledger.NAME).exists()
-    # first-F1: a stop leaves confirm the next step for when the person is ready, without asking again at once.
-    assert out.strip().endswith("NEXT: none")
-    status = server.handle({"jsonrpc": "2.0", "id": 2, "method": "tools/call",
-                            "params": {"name": "caesar_status", "arguments": {"job": str(path)}}})
-    assert status["result"]["content"][0]["text"].strip().endswith(" confirm")
+    # first-F1: a stop moves only this run on; a restarted Local Studio or another thread still offers confirm.
+    state = cli.Job(path).state()
+    assert "confirm_hash" not in state and list(state["unasked"]) == [cli.unasked_key(cli.Job(path))]
+    assert cli.unasked_key(cli.Job(path)).endswith("|" + os.environ["LOCAL_STUDIO_ASK_PID"])
 
 
-def test_confirm_run_in_bash_does_not_block_the_confirm_tool(tmp_path):
+def test_confirm_run_in_bash_does_not_block_the_confirm_tool(tmp_path, monkeypatch):
     # first-F3: the model's bash has no question channel; its confirm must not close Local Studio's.
     path, _ = job_with_facts(tmp_path)
     code, out = runner.caesar(path, "confirm")
-    assert code == 0 and "caesar_confirm tool again" in out and out.strip().endswith("NEXT: none")
-    assert "unasked" not in cli.Job(path).state() and "confirm_hash" not in cli.Job(path).state()
-    code, out = runner.caesar(path, "status")
-    assert out.strip().endswith(" confirm")
+    assert code == 0 and "caesar_confirm tool again" in out
+    state = cli.Job(path).state()
+    assert "confirm_hash" not in state and list(state["unasked"]) == ["local-studio||"]
+    monkeypatch.setenv("LOCAL_STUDIO_THREAD", "t1")
+    monkeypatch.setenv("LOCAL_STUDIO_ASK_PID", "4242")
+    assert cli.unasked_key(cli.Job(path)) == "local-studio|t1|4242"  # the tool's run is not the one that moved on
 
 
 @needs_unix
