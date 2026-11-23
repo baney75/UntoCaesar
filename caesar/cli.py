@@ -184,14 +184,6 @@ def read_stdin() -> tuple[str, str]:
     return lines[0][len("value:"):], lines[1][len("source:"):]
 
 
-def unasked_key(job: Job) -> str:
-    """Whose confirm asked nobody: the server's origin, and in Local Studio the thread and the app's pid (blank
-    in the model's bash, which never gets them), so only that same run moves past confirm."""
-    if job.ctx.origin == "outside":
-        return "outside"
-    return f"{job.ctx.origin}|{os.environ.get('LOCAL_STUDIO_THREAD', '')}|{os.environ.get('LOCAL_STUDIO_ASK_PID', '')}"
-
-
 def next_step(job: Job) -> str | None:
     """The one command to run next, without the program name, or None to stop."""
     if not job.exists():
@@ -204,7 +196,7 @@ def next_step(job: Job) -> str | None:
     state = job.state()
     ch = content_hash(facts)
     # A confirm that asked nobody moves on only for its own kind of server, so Local Studio still asks.
-    unasked = state.get("unasked", {}).get(unasked_key(job))
+    unasked = state.get("unasked", {}).get(job.ctx.origin)
     if any(e["confirmed"] == "" for e in facts.values()) and ch not in (state.get("confirm_hash"), unasked):
         return "confirm"
     if rejected(facts):
@@ -241,6 +233,14 @@ def emit(job: Job, lines: list[str], step: str | None = "auto") -> None:
     print(BANNER)
     for line in lines:
         print(line)
+    if step is None and job.ctx.can_confirm:
+        try:
+            waiting = [n for n, e in job.facts().items() if e["confirmed"] == ""] if job.exists() else []
+        except (OSError, ValueError):
+            waiting = []
+        if waiting:
+            print(f"Not confirmed yet: {len(waiting)} facts. When the person is ready, call the caesar_confirm tool"
+                  " with this job; it asks only about those.")
     # confirm runs as caesar-mcp's tool, whose working folder is not the model's, so it names the job in full.
     print(f"NEXT: {prog(job, absolute=step == 'confirm')} {step}" if step else "NEXT: none")
 
@@ -419,13 +419,11 @@ def cmd_confirm(job: Job, args) -> int:
             lines.append("Rejected (read the document again and set the right value): " + ", ".join(rejected_now) + ".")
     job.save_facts(facts)
     state = job.state()
-    if len(answers) < len(names):
-        # Not everyone answered (outside, no channel, no keychain, or the person stopped). This run moves on;
-        # another server, a restarted Local Studio or a later thread still offers confirm.
-        state.setdefault("unasked", {})[unasked_key(job)] = content_hash(facts)
-        if job.ctx.can_confirm:
-            lines.append("When the person is ready, call the caesar_confirm tool again with this job. Answers"
-                         " already given are kept.")
+    if any(e["confirmed"] == "" for e in facts.values()):
+        # Not every fact answered (outside, no channel, no keychain, the person stopped, or one fact asked).
+        # This kind of server moves on, bash included; the reply at the end says confirm can still ask
+        # (emit), and an outside job still gets confirm in Local Studio.
+        state.setdefault("unasked", {})[job.ctx.origin] = content_hash(facts)
     else:
         state["confirm_hash"] = content_hash(facts)
     job.save_state(state)

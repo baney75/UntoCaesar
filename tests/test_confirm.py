@@ -152,22 +152,27 @@ def test_refused_cancelled_or_odd_answers_confirm_nothing(studio, tmp_path, answ
     assert "Asked the person, in Local Studio about 0 of 2 facts" in out
     assert set(states(path).values()) == {""}
     assert not (path / ledger.NAME).exists()
-    # first-F1: a stop moves only this run on; a restarted Local Studio or another thread still offers confirm.
+    # first-F1: a stop never counts as confirmed, and bash's next steps move on with the tool's run.
     state = cli.Job(path).state()
-    assert "confirm_hash" not in state and list(state["unasked"]) == [cli.unasked_key(cli.Job(path))]
-    assert cli.unasked_key(cli.Job(path)).endswith("|" + os.environ["LOCAL_STUDIO_ASK_PID"])
+    assert "confirm_hash" not in state and list(state["unasked"]) == ["local-studio"]
 
 
-def test_confirm_run_in_bash_does_not_block_the_confirm_tool(tmp_path, monkeypatch):
-    # first-F3: the model's bash has no question channel; its confirm must not close Local Studio's.
+def test_confirm_run_in_bash_records_no_confirmation(tmp_path):
+    # first-F3: the model's bash has no question channel, so its confirm counts for nothing.
     path, _ = job_with_facts(tmp_path)
     code, out = runner.caesar(path, "confirm")
-    assert code == 0 and "caesar_confirm tool again" in out
-    state = cli.Job(path).state()
-    assert "confirm_hash" not in state and list(state["unasked"]) == ["local-studio||"]
-    monkeypatch.setenv("LOCAL_STUDIO_THREAD", "t1")
-    monkeypatch.setenv("LOCAL_STUDIO_ASK_PID", "4242")
-    assert cli.unasked_key(cli.Job(path)) == "local-studio|t1|4242"  # the tool's run is not the one that moved on
+    assert code == 0 and "confirm_hash" not in cli.Job(path).state()
+
+
+@needs_unix
+def test_confirming_one_fact_leaves_the_rest_to_confirm(studio, tmp_path):
+    # second-S1: one answered fact does not stand for the whole job.
+    studio(lambda r: {"status": "answered", "answer": "Yes"})
+    path, server = job_with_facts(tmp_path)
+    server.handle({"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+                   "params": {"name": "caesar_confirm", "arguments": {"job": str(path), "fact": "screen.ssa1099"}}})
+    assert states(path) == {"screen.ssa1099": "yes", "screen.1099r": ""}
+    assert "confirm_hash" not in cli.Job(path).state()
 
 
 @needs_unix
