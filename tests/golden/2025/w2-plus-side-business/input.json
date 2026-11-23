@@ -1,0 +1,194 @@
+{
+  "input": {
+    "return_header": {
+      "tax_year": 2025,
+      "synthetic": true
+    },
+    "return_data": {
+      "irs1040": {
+        "filing_status": {
+          "label": "Confirm your filing status for 2025",
+          "value": "married_jointly"
+        },
+        "tp_first_name": {
+          "label": "First name",
+          "value": "Test"
+        },
+        "tp_last_name": {
+          "label": "Last name",
+          "value": "Person"
+        },
+        "tp_date_of_birth": {
+          "label": "Date of birth",
+          "value": "1985-06-15"
+        },
+        "tp_blind": {
+          "label": "Are you legally blind?",
+          "value": false
+        },
+        "tp_dependent": {
+          "label": "Can someone claim you as a dependent?",
+          "value": false
+        },
+        "dependent_detail": [],
+        "estimated_tax_payment_1": {
+          "label": "Quarter 1",
+          "value": 0.0
+        },
+        "estimated_tax_payment_2": {
+          "label": "Quarter 2",
+          "value": 0.0
+        },
+        "estimated_tax_payment_3": {
+          "label": "Quarter 3",
+          "value": 0.0
+        },
+        "estimated_tax_payment_4": {
+          "label": "Quarter 4",
+          "value": 0.0
+        },
+        "applied_from_prior_year": {
+          "label": "Prior year refund applied",
+          "value": 0
+        },
+        "sp_first_name": {
+          "label": "Spouse first name",
+          "value": "Test"
+        },
+        "sp_last_name": {
+          "label": "Spouse last name",
+          "value": "Spouse"
+        },
+        "sp_date_of_birth": {
+          "label": "Spouse date of birth",
+          "value": "1990-07-07"
+        },
+        "sp_blind": {
+          "label": "Is your spouse legally blind?",
+          "value": false
+        },
+        "sp_dependent": {
+          "label": "Can someone claim your spouse as a dependent?",
+          "value": false
+        }
+      },
+      "has_ssn": {
+        "label": "Do you have a Social Security Number?",
+        "value": true
+      },
+      "w2": [
+        {
+          "who_applies_to": {
+            "label": "Whose W-2 is this?",
+            "value": "taxpayer"
+          },
+          "employer_name": {
+            "label": "Employer's name",
+            "value": "Cedar Hardware"
+          },
+          "wages": {
+            "label": "Box 1",
+            "value": 48994
+          },
+          "withholding": {
+            "label": "Box 2",
+            "value": 3000
+          },
+          "social_security_wages": {
+            "label": "Box 3",
+            "value": 48994
+          },
+          "social_security_tax": {
+            "label": "Box 4",
+            "value": 3037.63
+          },
+          "medicare_wages_and_tips": {
+            "label": "Box 5",
+            "value": 48994
+          },
+          "medicare_tax_withheld": {
+            "label": "Box 6",
+            "value": 710.41
+          },
+          "social_security_tips": {
+            "label": "Box 7",
+            "value": 0
+          },
+          "allocated_tips": {
+            "label": "Box 8",
+            "value": 0
+          },
+          "dependent_care_benefits": {
+            "label": "Box 10",
+            "value": 0
+          },
+          "statutory_employee": {
+            "label": "Box 13 statutory employee",
+            "value": false
+          }
+        }
+      ],
+      "irs1040_scheduleb": {
+        "irs1099_int": [],
+        "irs1099_div": []
+      },
+      "irs1040_schedule1": {
+        "irs1099_g": []
+      },
+      "irs1040_schedulec": [
+        {
+          "who_applies_to": {
+            "label": "Who worked for this business?",
+            "value": "spouse"
+          },
+          "business_name": {
+            "label": "Business name",
+            "value": "Fern Tutoring"
+          },
+          "material_participate": {
+            "label": "Material participant?",
+            "value": true
+          },
+          "schc_at_risk": {
+            "label": "Personally liable?",
+            "value": true
+          },
+          "gross_receipts_cash": {
+            "label": "Gross receipts or sales",
+            "value": 12000
+          },
+          "returns_allowances": {
+            "label": "Returns",
+            "value": 0
+          },
+          "other_income": {
+            "label": "Other income",
+            "value": 0
+          },
+          "irs1099_nec": [
+            {
+              "nec_payer_name": "Oak Learning Center",
+              "nec_comp": 9000,
+              "nec_fed_wh": 0
+            }
+          ],
+          "advertising": {
+            "label": "advertising",
+            "value": 500
+          },
+          "supplies": {
+            "label": "supplies",
+            "value": 1000
+          }
+        }
+      ]
+    }
+  },
+  "untocaesar": {
+    "anchors": [
+      "i1040 2025, Tax Table, page 68, Example: married filing jointly with taxable income of $25,300 finds tax of $2,562",
+      "Schedule SE (2025) lines 2 to 13",
+      "Form 8995 (2025) lines 1 to 15"
+    ]
+  }
+}
