@@ -181,16 +181,21 @@ def eic_may_apply(facts: dict, ret: Return, year: YearData) -> bool:
     """True when the facts pass the income and SSN tests of the EIC steps in the 1040 instructions.
 
     caesar does not hold birth dates, so it does not apply the Step 4 age test (25 to 64 with
-    no qualifying child) and refuses whenever the other tests pass. It counts as qualifying
-    children the dependents who are qualifying children with a valid SSN.
+    no qualifying child) and refuses whenever the other tests pass. A qualifying child for the
+    EIC need not be a dependent: it meets the relationship, age, residency and joint return
+    tests, with no support test (Pub 596 (2025), Rule 8, pages 10 and 11; i1040 2025, EIC
+    Step 3, page 41). So the number of children is the larger of the eic.children answer and
+    the dependents who are qualifying children with a valid SSN. A larger count only raises the
+    income limit, so the screen errs toward refusing.
     """
     status = F.value(facts, "filing_status")
     filers = ["taxpayer"] + (["spouse"] if status == "mfj" else [])
     if any(F.value(facts, f"{p}.ssn_valid_for_work") != "yes" for p in filers):
         return False
-    children = sum(1 for i in indexes(facts, "dependents.count")
-                   if F.value(facts, f"dependent.{i}.qualifying_child") == "yes"
-                   and F.value(facts, f"dependent.{i}.ssn_valid_for_work") == "yes")
+    dependents_counted = sum(1 for i in indexes(facts, "dependents.count")
+                             if F.value(facts, f"dependent.{i}.qualifying_child") == "yes"
+                             and F.value(facts, f"dependent.{i}.ssn_valid_for_work") == "yes")
+    children = max(dependents_counted, F.count(facts, "eic.children"))
     limits = year.fig("eic_screen", "agi_limit_mfj" if status == "mfj" else "agi_limit_other")
     limit = limits[min(children, 3)]
     earned = ret.get("1040.1z") + sum(ret.get(x) for x in ret.lines if x.startswith("schc-") and x.endswith(".31")) - ret.get("s1.15")

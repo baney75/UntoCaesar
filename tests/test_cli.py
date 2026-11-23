@@ -6,6 +6,7 @@ import io
 import pytest
 
 from caesar import cli
+from caesar import facts as F
 
 BANNER = "Test build: synthetic cases only, not for real records."
 
@@ -96,3 +97,24 @@ def test_no_start_gate(job, monkeypatch):
     monkeypatch.delenv("CAESAR_LOCAL_ONLY_ACK", raising=False)
     code, out = run(job, "new")
     assert code == 0
+
+
+SCREENS_NO = [name for name, _, _ in F.DOCUMENT_SCREENS + F.SITUATION_SCREENS]
+
+
+def answer(job, *pairs):
+    for name, value in pairs:
+        code, out = run(job, "set", name, value, "--source", "answer")
+        assert code == 0, out
+    return out
+
+
+def test_eic_child_question_is_asked_without_dependents(job):
+    # sol-F1: an EIC qualifying child need not be a dependent, so the question is always asked.
+    run(job, "new")
+    answer(job, *[(name, "no") for name in SCREENS_NO])
+    answer(job, ("filing_status", "single"), ("taxpayer.born_before_1961", "no"), ("taxpayer.blind", "no"),
+           ("taxpayer.ssn_valid_for_work", "yes"), ("dependents.count", "0"))
+    _, out = run(job, "ask")
+    assert "set eic.children <number>" in out
+    assert "even one you do not list as a dependent" in out

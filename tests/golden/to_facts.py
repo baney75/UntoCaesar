@@ -26,6 +26,7 @@ CHILD_RELATIONSHIPS = {"son", "daughter", "stepson", "stepdaughter", "stepchild"
                        "half brother", "half sister", "stepbrother", "stepsister", "grandchild", "niece", "nephew"}
 SENIOR_BEFORE = "1961-01-02"
 UNDER_17_AFTER = "2008-12-31"
+UNDER_19_AFTER = "2006-12-31"
 
 
 def v(node, key, default=None):
@@ -107,6 +108,13 @@ def all_facts(case: dict) -> dict[str, tuple[str, str]]:
         if not has_ssn:
             put(f"dependent.{i}.has_tin", yes(d.get("dependent_itin")), "answer")
         put(f"dependent.{i}.us_person", yes(d.get("dependent_us_citizen_national_or_resident_alien", True)), "answer")
+
+    # Children who meet the EIC qualifying child tests, dependents or not (Pub 596 (2025), Rule 8).
+    # A case names any that are not listed dependents in untocaesar.eic_children.
+    eic_children = sum(1 for d in deps if str(d.get("dependent_relationship", "")).lower() in CHILD_RELATIONSHIPS
+                       and int(d.get("dependent_months_lived", 0)) > 6
+                       and str(d.get("dependent_date_of_birth", "")) > UNDER_19_AFTER)
+    put("eic.children", extra.get("eic_children", eic_children), "answer")
 
     w2s = rd.get("w2") or []
     put("w2.count", len(w2s), "answer: number of W-2s")

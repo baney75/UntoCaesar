@@ -94,6 +94,17 @@ SITUATION_SCREENS = [
      "state and local returns (caesar prepares only the federal Form 1040)"),
 ]
 
+# The relationship, age and residency tests for an EIC qualifying child, from Pub 596 (2025),
+# Rule 8, pages 10 and 11, and the 2025 Form 1040 instructions, EIC Step 3, page 41. The joint
+# return test and "younger than you" are left out, so the count can only be too high, which only
+# makes the EIC screen refuse more often.
+EIC_CHILDREN_QUESTION = (
+    "How many children lived with you in the United States for more than half of 2025 and are your son, daughter,"
+    " stepchild, foster child, brother, sister, half brother, half sister, stepbrother, stepsister, or a descendant"
+    " of one of them (such as a grandchild, niece or nephew), and at the end of 2025 were under 19, or under 24 and"
+    " a full-time student, or any age and permanently and totally disabled? Count every such child, even one you do"
+    " not list as a dependent or who paid more than half of their own support. (0 if none)")
+
 PERSON_QUESTIONS = [
     ("born_before_1961", "Was {who} born before January 2, 1961?"),
     ("blind", "Is {who} blind (see the Form 1040 instructions for line 12d)?"),
@@ -228,6 +239,10 @@ def specs(facts: dict) -> list[Spec]:
         if value(facts, f"{d}.ssn_valid_for_work") == "no":
             out.append(Spec(f"{d}.has_tin", "yesno", f"Dependent {i}: does this person have an ITIN or ATIN issued before the return's due date?"))
         out.append(Spec(f"{d}.us_person", "yesno", f"Dependent {i}: is this person a U.S. citizen, U.S. national or U.S. resident alien?"))
+
+    # A qualifying child for the EIC need not be a dependent: Pub 596 (2025), Rule 8, has no support
+    # test, so this is asked of everyone (see checks.eic_may_apply).
+    out.append(Spec("eic.children", "count", EIC_CHILDREN_QUESTION))
 
     out.append(Spec("w2.count", "count", "How many Forms W-2 did you (and your spouse, on a joint return) get for 2025? (0 if none)"))
     for i in range(1, count(facts, "w2.count") + 1):

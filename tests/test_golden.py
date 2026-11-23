@@ -17,7 +17,8 @@ def test_suite_has_the_required_cases():
     names = {f.name for f in CASES}
     assert {"single-w2", "mfj-two-children", "hoh-blind-two-dependents", "freelancer-schedule-c",
             "w2-plus-side-business", "refuse-ssa1099", "refuse-1099r", "refuse-1099g", "refuse-schedule-b-interest",
-            "refuse-qualified-dividends", "refuse-eic-one-child", "misread-w2-box1", "hostile-payer-name"} <= names
+            "refuse-qualified-dividends", "refuse-eic-one-child", "misread-w2-box1", "hostile-payer-name",
+            "refuse-eic-child-not-dependent"} <= names
 
 
 @pytest.mark.parametrize("folder", CASES, ids=[f.name for f in CASES])

@@ -82,6 +82,11 @@ title = "2025 Instructions for Schedule 8812 (Form 1040)"
 url = "https://www.irs.gov/pub/irs-prior/i1040s8--2025.pdf"
 revision = "Jan 23, 2026"
 
+[sources.p596]
+title = "Publication 596 (2025), Earned Income Credit (EIC)"
+url = "https://www.irs.gov/pub/irs-prior/p596--2025.pdf"
+revision = "Nov 18, 2025, Cat. No. 15173A"
+
 [sources.i8959]
 title = "2025 Instructions for Form 8959, Additional Medicare Tax"
 url = "https://www.irs.gov/pub/irs-prior/i8959--2025.pdf"
@@ -224,6 +229,15 @@ agi_limit_other = [19104, 50434, 57310, 61555]
 investment_income_limit = 11950
 src = "i1040"
 at = "Lines 27a, 27b and 27c, Earned Income Credit: Step 1 questions 1 (line 11b limits) and 2 (valid SSN) and Step 2 question 2 (investment income), page 40; Step 4 question 2 (age 25 to 64 with no qualifying child), page 41; Step 5 question 3 (earned income limits), page 42"
+
+[figures.eic_qualifying_child]
+# Used only by the EIC screen. A qualifying child for the EIC meets the relationship, age,
+# residency and joint return tests; there is no support test, so the child need not be a
+# dependent. caesar asks eic.children of every filer. The 1040 instructions say the same in
+# Lines 27a to 27c, EIC Step 3, Qualifying Child, page 41.
+tests = ["relationship", "age", "residency", "joint return"]
+src = "p596"
+at = "Chapter 2, Rule 8, Your Child Must Meet the Relationship, Age, Residency, and Joint Return Tests, pages 10 and 11, and Figure A"
 
 [figures.excess_social_security]
 # Used only to detect the Schedule 3 line 11 credit, which v0 refuses.
