@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- UntoCaesar synthetic tax year 2025 case. Expected Form 1040 lines in TaxCalcBench's MeF layout. -->
+<Return returnVersion="2025">
+  <ReturnData>
+    <IRS1040>
+      <WagesAmt>72000</WagesAmt>
+      <TotalIncomeAmt>72000</TotalIncomeAmt>
+      <AdjustedGrossIncomeAmt>72000</AdjustedGrossIncomeAmt>
+      <TotalItemizedOrStandardDedAmt>31500</TotalItemizedOrStandardDedAmt>
+      <TaxableIncomeAmt>40500</TaxableIncomeAmt>
+      <TaxAmt>4386</TaxAmt>
+      <CTCODCAmt>4386</CTCODCAmt>
+      <WithholdingTaxAmt>1800</WithholdingTaxAmt>
+      <AdditionalChildTaxCreditAmt>2214</AdditionalChildTaxCreditAmt>
+      <RefundableCreditsAmt>2214</RefundableCreditsAmt>
+      <TotalPaymentsAmt>4014</TotalPaymentsAmt>
+      <OverpaidAmt>4014</OverpaidAmt>
+      <RefundAmt>4014</RefundAmt>
+    </IRS1040>
+  </ReturnData>
+</Return>

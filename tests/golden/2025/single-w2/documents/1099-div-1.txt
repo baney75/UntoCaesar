@@ -1,0 +1,11 @@
+Test build: synthetic cases only, not for real records.
+
+Form 1099-DIV Dividends and Distributions 2025
+==============================================
+PAYER'S name                   Example Index Fund
+PAYER'S TIN                    00-0001003
+RECIPIENT'S TIN                000-00-0003
+1a Total ordinary dividends    145.00
+1b Qualified dividends         0.00
+2a Total capital gain distr.   0.00
+4 Federal income tax withheld  0.00

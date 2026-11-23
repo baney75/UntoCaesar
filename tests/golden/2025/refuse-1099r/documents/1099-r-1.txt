@@ -1,0 +1,6 @@
+Test build: synthetic cases only, not for real records.
+
+Form 1099-R Distributions From Pensions, Annuities, Retirement Plans 2025
+=========================================================================
+1 Gross distribution  8,000.00
+2a Taxable amount     8,000.00

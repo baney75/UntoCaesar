@@ -1,4 +1,9 @@
 {
+  "suites": [
+    "S",
+    "M",
+    "L"
+  ],
   "outcome": "refused",
   "at": "check",
   "message": "earned income credit"

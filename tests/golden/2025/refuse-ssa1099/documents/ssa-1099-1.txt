@@ -1,0 +1,5 @@
+Test build: synthetic cases only, not for real records.
+
+Form SSA-1099 Social Security Benefit Statement 2025
+====================================================
+Box 5 Net benefits for 2025  14,000.00

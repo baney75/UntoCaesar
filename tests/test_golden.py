@@ -4,6 +4,7 @@ import json
 import re
 import subprocess
 
+import documents
 import pytest
 import runner
 
@@ -21,6 +22,37 @@ def test_suite_has_the_required_cases():
             "refuse-qualified-dividends", "refuse-eic-one-child", "misread-w2-box1", "hostile-payer-name",
             "refuse-eic-child-not-dependent", "mfj-one-business-each",
             "refuse-amt-withheld-two-w2-one-employer"} <= names
+
+
+def test_tier_suites_have_the_spec_counts():
+    # docs/SPEC.md, Tier evals: S runs 12 W-2 only cases, M 24 with Schedule C and SE, L all 30;
+    # refusal cases are counted apart, and one misread W-2 box 1 case sits in every suite.
+    cases = {f.name: expected(f) for f in CASES}
+    for suite, n in (("S", 12), ("M", 24), ("L", 30)):
+        chosen = {k: w for k, w in cases.items() if suite in w["suites"]}
+        in_scope = [k for k, w in chosen.items() if w["outcome"] != "refused"]
+        assert len(in_scope) == n, (suite, len(in_scope))
+        assert [k for k, w in chosen.items() if w["outcome"] == "check_failed"] == ["misread-w2-box1"]
+        assert sum(w["outcome"] == "refused" for w in chosen.values()) >= 8
+    for name, w in cases.items():
+        assert w["suites"] in (["S", "M", "L"], ["M", "L"], ["L"]), name
+        rd = json.loads((runner.CASES / name / "input.json").read_text())["input"]["return_data"]
+        if "S" in w["suites"]:
+            assert not rd.get("irs1040_schedulec"), f"{name}: the S suite is W-2 only"
+
+
+def test_documents_and_answers_are_current():
+    for folder in CASES:
+        assert documents.write(folder, check=True) == [], folder.name
+
+
+def test_documents_use_only_unissued_ids():
+    for folder in CASES:
+        for doc in (folder / "documents").glob("*.txt"):
+            text = doc.read_text(encoding="utf-8")
+            assert text.startswith("Test build: synthetic cases only, not for real records.")
+            assert all(m == "000" for m in re.findall(r"\b(\d{3})-\d{2}-\d{4}\b", text)), doc
+            assert all(m == "00" for m in re.findall(r"\b(\d{2})-\d{7}\b", text)), doc
 
 
 @pytest.mark.parametrize("folder", CASES, ids=[f.name for f in CASES])
