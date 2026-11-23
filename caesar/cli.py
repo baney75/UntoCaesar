@@ -163,7 +163,10 @@ def next_step(job: Job) -> str | None:
 
 def emit(job: Job, lines: list[str], step: str | None = "auto") -> None:
     if step == "auto":
-        step = next_step(job)
+        try:
+            step = next_step(job)
+        except (OSError, ValueError):
+            step = None
     print(BANNER)
     for line in lines:
         print(line)

@@ -21,7 +21,7 @@ from pathlib import Path
 
 from . import facts as F
 
-SCRIPTED = "scripted test person"
+SCRIPTED = F.SCRIPTED
 
 
 class AskUser:

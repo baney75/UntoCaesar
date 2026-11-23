@@ -145,3 +145,18 @@ def test_eic_child_question_is_asked_without_dependents(job):
     _, out = run(job, "ask")
     assert "set eic.children <number>" in out
     assert "even one you do not list as a dependent" in out
+
+
+@pytest.mark.parametrize("by", ["person", "", "Person"])
+def test_a_confirmation_caesar_did_not_record_is_refused_on_load(job, by):
+    # first-F2: only caesar confirm's own channels can mark a fact confirmed.
+    run(job, "new")
+    answer(job, ("screen.ssa1099", "no"))
+    path = job / "facts.toml"
+    text = path.read_text(encoding="utf-8").replace('confirmed = ""\nby = ""', f'confirmed = "yes"\nby = "{by}"')
+    path.write_text(text, encoding="utf-8")
+    for args in (("status",), ("check",), ("done",)):
+        code, out = run(job, *args)
+        check_message(out)
+        assert code == 2 and "only caesar confirm records" in out
+        assert out.strip().endswith("NEXT: none")

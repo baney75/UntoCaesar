@@ -389,15 +389,27 @@ def refusals(facts: dict) -> list[str]:
 # facts.toml
 # ---------------------------------------------------------------------------
 
-# confirmed is "" (not yet), "yes" or "no" (the person rejected the value). by names who answered.
+# confirmed is "" (not yet), "yes" or "no" (the person rejected the value). by names who answered,
+# and must be a channel caesar confirm provides. This build has only the eval's scripted person;
+# the person channel joins CONFIRMERS when the core guarantees the person answers (local-studio#15).
+SCRIPTED = "scripted test person"
+CONFIRMERS = (SCRIPTED,)
+
+
 def load(path: Path) -> dict:
     if not path.exists():
         return {}
     with path.open("rb") as f:
         data = tomllib.load(f)
-    return {name: {"value": str(e["value"]), "source": str(e.get("source", "")),
-                   "confirmed": str(e.get("confirmed", "")), "by": str(e.get("by", ""))}
-            for name, e in data.get("facts", {}).items()}
+    facts = {name: {"value": str(e["value"]), "source": str(e.get("source", "")),
+                    "confirmed": str(e.get("confirmed", "")), "by": str(e.get("by", ""))}
+             for name, e in data.get("facts", {}).items()}
+    for name, e in facts.items():
+        if (e["confirmed"], e["by"]) != ("", "") and (e["confirmed"] not in ("yes", "no") or e["by"] not in CONFIRMERS):
+            raise ValueError(f"facts.toml marks {name} as confirmed = {e['confirmed']!r} by {e['by']!r}, but only caesar"
+                             " confirm records a confirmation, and in this build only for the eval's scripted test person."
+                             " caesar will not use this job. Start a new job")
+    return facts
 
 
 def save(path: Path, facts: dict, year: int) -> None:
