@@ -78,7 +78,8 @@ def run(folder: Path, scripted: bool = True, workdir: Path | None = None) -> dic
         for name, value, source in to_facts.convert(case):
             code, out = caesar(job, "set", name, value, "--source", source)
             transcript.append((f"set {name}", code, out))
-            if code == 1:
+            # A model follows NEXT, so a set that ends in NEXT: none stops the interview.
+            if code == 1 or out.strip().endswith("NEXT: none"):
                 refused_at = "set"
                 break
         for _ in range(40):

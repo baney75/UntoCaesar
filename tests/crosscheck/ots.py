@@ -113,6 +113,7 @@ def crosscheck(case: Path, src: Path, bin_dir: Path, work: Path) -> dict:
 
     # Schedule C and SE, one per business owner.
     sched_c_out, s1_3, s1_15, s2_4 = None, Decimal(0), Decimal(0), Decimal(0)
+    qbi: dict[str, Decimal] = {}
     for i in range(1, count(facts, "business.count") + 1):
         b = f"business.{i}"
         who = owner(facts, b)
@@ -139,6 +140,7 @@ def crosscheck(case: Path, src: Path, bin_dir: Path, work: Path) -> dict:
         ots.update({f"se-{who}.{k[1:]}": v for k, v in se.items() if k.startswith("L")})
         s2_4 += se.get("L12", Decimal(0))
         s1_15 += se.get("L13", Decimal(0))
+        qbi[who] = c["L31"] - se.get("L13", Decimal(0))
 
     base = {
         "Status": STATUS[status],
@@ -164,17 +166,21 @@ def crosscheck(case: Path, src: Path, bin_dir: Path, work: Path) -> dict:
     f1040, f1040_out = form_1040({}, "1")
     extra: dict[str, str] = {}
 
-    # Form 8995, from the OTS 1040 output file. Line 1 is typed in with the formula OTS's own
-    # auto calculation uses (Schedule C line 31 less Schedule 1 line 15), because with auto
-    # calculation on, the stock template's row iii name field (a lone ";") counts as a second
-    # business and doubles line 2.
+    # Form 8995, from the OTS 1040 output file. Line 1 has one row per business owner, typed in
+    # with the formula OTS's own auto calculation uses (Schedule C line 31 less that owner's
+    # Schedule SE line 13), because with auto calculation on, the stock template's row iii name
+    # field (a lone ";") counts as another business and doubles line 2.
     if sched_c_out is not None:
         p = folder / "f8995.txt"
-        p.write_text(fill(tpl_8995, {"FileName1040": f1040_out.name, "L1_i_a:": "Business",
-                                     "L1_i_c": str(s1_3 - s1_15)}))
+        rows = {"FileName1040": f1040_out.name}
+        for row, (who, amount) in zip(("i", "ii"), qbi.items()):
+            rows[f"L1_{row}_a:"] = f"Business_{who}"
+            rows[f"L1_{row}_c"] = str(amount)
+        p.write_text(fill(tpl_8995, rows))
         q = run(bin_dir, "f8995_2025", p)
         ots.update({f"8995.{k[1:]}": v for k, v in q.items() if k.startswith("L") and k[1:].isdigit()})
-        ots[f"8995-{who}.1"] = q["L1_i_c"]
+        for row, who in zip(("i", "ii"), qbi):
+            ots[f"8995-{who}.1"] = q[f"L1_{row}_c"]
         extra["L13a"] = str(q["L15"])
         f1040, f1040_out = form_1040(extra, "2")
 

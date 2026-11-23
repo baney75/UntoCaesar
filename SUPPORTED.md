@@ -15,6 +15,7 @@ Each row names the golden case whose every computed line passes `uv run --group 
 | Head of household, blind filer, a qualifying child and an other dependent, credit for other dependents | `tests/golden/2025/hoh-blind-two-dependents` |
 | Single freelancer with Form 1099-NEC, Schedule C, Schedule SE, Form 8995 qualified business income deduction, estimated payments | `tests/golden/2025/freelancer-schedule-c` |
 | Married filing jointly, W-2 wages plus a spouse's side business on Schedule C and SE | `tests/golden/2025/w2-plus-side-business` |
+| Married filing jointly, one Schedule C for each spouse, a Schedule SE for each spouse, Form 8995 with one row per owner | `tests/golden/2025/mfj-one-business-each` |
 | Married filing jointly, both 65 or older, Schedule 1-A senior deduction, Tax Computation Worksheet | `tests/golden/2025/mfj-seniors` |
 | A payer name with HTML in it renders inert on worksheet.html | `tests/golden/2025/hostile-payer-name` |
 | A misread W-2 box 1 that the person rejects at confirm ends in a failing check | `tests/golden/2025/misread-w2-box1` |

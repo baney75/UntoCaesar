@@ -48,7 +48,11 @@ def fact_refusals(facts: dict) -> list[Finding]:
             out.append(Finding(f"Dependent {i} has no SSN, ITIN or ATIN, and caesar v0 does not handle a dependent without one.", f"{d}.has_tin"))
     if deps and any(F.value(facts, f"{p}.ssn_valid_for_work") == "no" for p in filers):
         out.append(Finding("caesar v0 does not handle the child tax credit identification rules for a filer without a Social Security number valid for work."))
-    owners = [owner_of(facts, f"business.{i}") for i in indexes(facts, "business.count")]
+    # On a joint return each business's owner is asked after business.count, so count only the
+    # owners answered so far; a missing owner is a missing fact, which blocks compute.
+    businesses = [f"business.{i}" for i in indexes(facts, "business.count")]
+    owners = [F.value(facts, f"{b}.owner") for b in businesses] if status == "mfj" else [owner_of(facts, b) for b in businesses]
+    owners = [o for o in owners if o]
     if len(owners) != len(set(owners)):
         out.append(Finding("caesar v0 handles one Schedule C per person; more than one business for the same person is outside v0."))
     return out

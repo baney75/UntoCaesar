@@ -5,6 +5,7 @@ import io
 
 import pytest
 
+from caesar import checks as C
 from caesar import cli
 from caesar import facts as F
 
@@ -107,6 +108,32 @@ def answer(job, *pairs):
         code, out = run(job, "set", name, value, "--source", "answer")
         assert code == 0, out
     return out
+
+
+def test_joint_return_asks_each_business_owner(job):
+    # second-F7: one Schedule C for each spouse must reach the owner questions.
+    run(job, "new")
+    answer(job, *[(name, "no") for name in SCREENS_NO])
+    answer(job, ("filing_status", "mfj"))
+    for who in ("taxpayer", "spouse"):
+        answer(job, (f"{who}.born_before_1961", "no"), (f"{who}.blind", "no"), (f"{who}.ssn_valid_for_work", "yes"))
+    answer(job, ("dependents.count", "0"), ("eic.children", "0"), ("w2.count", "0"), ("int1099.count", "0"),
+           ("div1099.count", "0"), ("nec1099.count", "0"))
+    out = answer(job, ("business.count", "2"))
+    assert out.strip().endswith("NEXT: caesar --job " + str(job) + " ask")
+    answer(job, ("business.1.name", "Birch Design"))
+    _, out = run(job, "ask")
+    assert "set business.1.owner <taxpayer or spouse>" in out
+    answer(job, ("business.1.owner", "taxpayer"), ("business.2.name", "Fern Tutoring"))
+    _, out = run(job, "status")
+    assert "outside what caesar v0" not in out
+    # Until business 2's owner is answered, nothing can be computed or prepared.
+    _, out = run(job, "compute")
+    assert "cannot compute" in out
+    answer(job, ("business.2.owner", "spouse"))
+    assert not C.fact_refusals(cli.Job(job).facts())
+    answer(job, ("business.2.owner", "taxpayer"))
+    assert C.fact_refusals(cli.Job(job).facts())
 
 
 def test_eic_child_question_is_asked_without_dependents(job):
