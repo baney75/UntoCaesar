@@ -54,7 +54,8 @@ def apply(facts: dict, job_dir: Path, job_id: str) -> None:
             continue
         current = facts.get(fact)
         if (current is None or answer not in ("yes", "no") or (current["value"], current["source"]) != (value, source)
-                or not hmac.compare_digest(mac, signed(key, job_id, fact, value, source, answer, by))):
+                or not hmac.compare_digest(mac.encode("utf-8", "replace"),  # bytes: a non-ASCII mac is just wrong
+                                           signed(key, job_id, fact, value, source, answer, by).encode())):
             continue
         current["confirmed"], current["by"] = answer, by
 

@@ -80,6 +80,17 @@ def test_newest_answer_wins(tmp_path):
     assert states(path)["screen.ssa1099"] == "no"
 
 
+def test_a_non_ascii_mac_confirms_nothing_and_breaks_nothing(tmp_path, test_keychain):
+    # second-F6: a bad ledger means unconfirmed, never an error.
+    path, _ = job_with_facts(tmp_path)
+    entry = cli.Job(path).facts()["screen.ssa1099"]
+    (path / ledger.NAME).write_text(json.dumps({"entries": [{"fact": "screen.ssa1099", "value": entry["value"],
+        "source": entry["source"], "answer": "yes", "by": K.PERSON, "mac": "\u00e9"}]}), encoding="utf-8")
+    assert states(path)["screen.ssa1099"] == ""
+    code, out = runner.caesar(path, "status")
+    assert code == 0 and "NEXT: " in out
+
+
 def test_no_keychain_means_nothing_signed(tmp_path):
     path, server = job_with_facts(tmp_path)
     with runner.scripted_person({"screen.ssa1099": "no", "screen.1099r": "no"}, path):
