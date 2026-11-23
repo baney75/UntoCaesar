@@ -1,0 +1,11 @@
+Test build: synthetic cases only, not for real records.
+
+Form 1099-NEC Nonemployee Compensation 2025
+===========================================
+PAYER'S name                        Northwind Analytics
+PAYER'S TIN                         00-0001001
+RECIPIENT'S TIN                     000-00-0001
+RECIPIENT'S name                    Test Person
+1 Nonemployee compensation          75,000.00
+3 Excess golden parachute payments  0.00
+4 Federal income tax withheld       0.00

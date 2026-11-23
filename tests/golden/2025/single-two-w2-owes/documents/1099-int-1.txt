@@ -1,0 +1,12 @@
+Test build: synthetic cases only, not for real records.
+
+Form 1099-INT Interest Income 2025
+==================================
+PAYER'S name                                               Prairie Savings Bank
+PAYER'S TIN                                                00-0001003
+RECIPIENT'S TIN                                            000-00-0003
+1 Interest income                                          85.00
+2 Early withdrawal penalty                                 0.00
+3 Interest on U.S. Savings Bonds and Treasury obligations  0.00
+4 Federal income tax withheld                              0.00
+8 Tax-exempt interest                                      0.00

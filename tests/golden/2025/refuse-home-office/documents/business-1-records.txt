@@ -1,0 +1,31 @@
+Test build: synthetic cases only, not for real records.
+
+2025 business records summary: Alder Grove Design
+=================================================
+Business                                                           Alder Grove Design
+Owner                                                              Test Person
+Gross receipts for 2025 (all customers, including every 1099-NEC)  48,000.00
+Returns and refunds to customers                                   0.00
+Other business income                                              0.00
+Advertising                                                        0.00
+Commissions and fees paid                                          0.00
+Contract labor                                                     0.00
+Employee benefit programs                                          0.00
+Insurance (not health)                                             0.00
+Mortgage interest, business property                               0.00
+Other business interest                                            0.00
+Legal and professional services                                    0.00
+Office expense                                                     0.00
+Pension and profit-sharing plans                                   0.00
+Rent or lease of equipment                                         0.00
+Rent of other business property                                    0.00
+Repairs and maintenance                                            0.00
+Supplies                                                           500.00
+Taxes and licenses                                                 0.00
+Travel (not meals)                                                 0.00
+Business meals, full cost                                          0.00
+Utilities                                                          0.00
+Wages paid to employees                                            0.00
+Other expenses                                                     0.00
+Business miles driven (from the mileage log)                       0
+Business parking and tolls                                         0.00

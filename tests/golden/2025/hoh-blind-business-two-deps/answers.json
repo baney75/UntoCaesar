@@ -1,0 +1,308 @@
+{
+  "test_build": "Test build: synthetic cases only, not for real records.",
+  "facts": {
+    "screen.ssa1099": {
+      "say": "no"
+    },
+    "screen.1099r": {
+      "say": "no"
+    },
+    "screen.1099g": {
+      "say": "no"
+    },
+    "screen.1099b": {
+      "say": "no"
+    },
+    "screen.1099k": {
+      "say": "no"
+    },
+    "screen.1098e": {
+      "say": "no"
+    },
+    "screen.1098t": {
+      "say": "no"
+    },
+    "screen.1095a": {
+      "say": "no"
+    },
+    "screen.5498sa": {
+      "say": "no"
+    },
+    "screen.k1": {
+      "say": "no"
+    },
+    "screen.other_forms": {
+      "say": "no"
+    },
+    "screen.educator_expenses": {
+      "say": "no"
+    },
+    "screen.ira_contributions": {
+      "say": "no"
+    },
+    "screen.student_loan_interest": {
+      "say": "no"
+    },
+    "screen.tuition": {
+      "say": "no"
+    },
+    "screen.hsa_contributions": {
+      "say": "no"
+    },
+    "screen.claimed_as_dependent": {
+      "say": "no"
+    },
+    "screen.itemize": {
+      "say": "no"
+    },
+    "screen.sold_property": {
+      "say": "no"
+    },
+    "screen.rental_royalty": {
+      "say": "no"
+    },
+    "screen.foreign": {
+      "say": "no"
+    },
+    "screen.other_income": {
+      "say": "no"
+    },
+    "screen.other_adjustments": {
+      "say": "no"
+    },
+    "screen.other_credits": {
+      "say": "no"
+    },
+    "screen.household_employee": {
+      "say": "no"
+    },
+    "screen.new_deductions": {
+      "say": "no"
+    },
+    "screen.other_taxes": {
+      "say": "no"
+    },
+    "screen.net_operating_loss": {
+      "say": "no"
+    },
+    "screen.qbi_loss_carryforward": {
+      "say": "no"
+    },
+    "screen.state_return": {
+      "say": "no"
+    },
+    "filing_status": {
+      "say": "hoh"
+    },
+    "taxpayer.born_before_1961": {
+      "say": "no"
+    },
+    "taxpayer.blind": {
+      "say": "yes"
+    },
+    "taxpayer.ssn_valid_for_work": {
+      "say": "yes"
+    },
+    "dependents.count": {
+      "say": "2"
+    },
+    "dependent.1.qualifying_child": {
+      "say": "yes"
+    },
+    "dependent.1.under_17": {
+      "say": "yes"
+    },
+    "dependent.1.ssn_valid_for_work": {
+      "say": "yes"
+    },
+    "dependent.1.us_person": {
+      "say": "yes"
+    },
+    "dependent.2.qualifying_child": {
+      "say": "no"
+    },
+    "dependent.2.under_17": {
+      "say": "no"
+    },
+    "dependent.2.ssn_valid_for_work": {
+      "say": "yes"
+    },
+    "dependent.2.us_person": {
+      "say": "yes"
+    },
+    "eic.children": {
+      "say": "1"
+    },
+    "w2.count": {
+      "say": "1"
+    },
+    "w2.1.owner": {
+      "say": "taxpayer"
+    },
+    "w2.1.employer": {
+      "document": "w2-1.txt"
+    },
+    "w2.1.box1": {
+      "document": "w2-1.txt"
+    },
+    "w2.1.box2": {
+      "document": "w2-1.txt"
+    },
+    "w2.1.box3": {
+      "document": "w2-1.txt"
+    },
+    "w2.1.box4": {
+      "document": "w2-1.txt"
+    },
+    "w2.1.box5": {
+      "document": "w2-1.txt"
+    },
+    "w2.1.box6": {
+      "document": "w2-1.txt"
+    },
+    "w2.1.box7": {
+      "document": "w2-1.txt"
+    },
+    "w2.1.box8": {
+      "document": "w2-1.txt"
+    },
+    "w2.1.box10": {
+      "document": "w2-1.txt"
+    },
+    "w2.1.box12": {
+      "document": "w2-1.txt"
+    },
+    "w2.1.box13_statutory": {
+      "document": "w2-1.txt"
+    },
+    "int1099.count": {
+      "say": "0"
+    },
+    "div1099.count": {
+      "say": "0"
+    },
+    "nec1099.count": {
+      "say": "1"
+    },
+    "nec1099.1.owner": {
+      "say": "taxpayer"
+    },
+    "nec1099.1.payer": {
+      "document": "1099-nec-1.txt"
+    },
+    "nec1099.1.box1": {
+      "document": "1099-nec-1.txt"
+    },
+    "nec1099.1.box3": {
+      "document": "1099-nec-1.txt"
+    },
+    "nec1099.1.box4": {
+      "document": "1099-nec-1.txt"
+    },
+    "business.count": {
+      "say": "1"
+    },
+    "business.1.name": {
+      "say": "Lakeshore Tutoring"
+    },
+    "business.1.owner": {
+      "say": "taxpayer"
+    },
+    "business.1.material_participation": {
+      "say": "yes"
+    },
+    "business.1.all_at_risk": {
+      "say": "yes"
+    },
+    "business.1.inventory": {
+      "say": "no"
+    },
+    "business.1.home_office": {
+      "say": "no"
+    },
+    "business.1.vehicle_actual": {
+      "say": "no"
+    },
+    "business.1.depreciation": {
+      "say": "no"
+    },
+    "business.1.gross_receipts": {
+      "document": "business-1-records.txt"
+    },
+    "business.1.returns": {
+      "document": "business-1-records.txt"
+    },
+    "business.1.other_income": {
+      "document": "business-1-records.txt"
+    },
+    "business.1.advertising": {
+      "document": "business-1-records.txt"
+    },
+    "business.1.commissions": {
+      "document": "business-1-records.txt"
+    },
+    "business.1.contract_labor": {
+      "document": "business-1-records.txt"
+    },
+    "business.1.employee_benefits": {
+      "document": "business-1-records.txt"
+    },
+    "business.1.insurance": {
+      "document": "business-1-records.txt"
+    },
+    "business.1.mortgage_interest": {
+      "document": "business-1-records.txt"
+    },
+    "business.1.other_interest": {
+      "document": "business-1-records.txt"
+    },
+    "business.1.legal_professional": {
+      "document": "business-1-records.txt"
+    },
+    "business.1.office": {
+      "document": "business-1-records.txt"
+    },
+    "business.1.pension_plans": {
+      "document": "business-1-records.txt"
+    },
+    "business.1.rent_equipment": {
+      "document": "business-1-records.txt"
+    },
+    "business.1.rent_other": {
+      "document": "business-1-records.txt"
+    },
+    "business.1.repairs": {
+      "document": "business-1-records.txt"
+    },
+    "business.1.supplies": {
+      "document": "business-1-records.txt"
+    },
+    "business.1.taxes_licenses": {
+      "document": "business-1-records.txt"
+    },
+    "business.1.travel": {
+      "document": "business-1-records.txt"
+    },
+    "business.1.meals": {
+      "document": "business-1-records.txt"
+    },
+    "business.1.utilities": {
+      "document": "business-1-records.txt"
+    },
+    "business.1.wages": {
+      "document": "business-1-records.txt"
+    },
+    "business.1.business_miles": {
+      "document": "business-1-records.txt"
+    },
+    "business.1.parking_tolls": {
+      "document": "business-1-records.txt"
+    },
+    "business.1.other_expenses": {
+      "document": "business-1-records.txt"
+    },
+    "payments.estimated": {
+      "say": "0"
+    }
+  }
+}

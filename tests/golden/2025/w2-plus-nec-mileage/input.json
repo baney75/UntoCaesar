@@ -1,0 +1,179 @@
+{
+  "input": {
+    "return_header": {
+      "tax_year": 2025,
+      "synthetic": true
+    },
+    "return_data": {
+      "irs1040": {
+        "filing_status": {
+          "label": "Confirm your filing status for 2025",
+          "value": "single"
+        },
+        "tp_first_name": {
+          "label": "First name",
+          "value": "Test"
+        },
+        "tp_last_name": {
+          "label": "Last name",
+          "value": "Person"
+        },
+        "tp_date_of_birth": {
+          "label": "Date of birth",
+          "value": "1987-12-12"
+        },
+        "tp_blind": {
+          "label": "Are you legally blind?",
+          "value": false
+        },
+        "tp_dependent": {
+          "label": "Can someone claim you as a dependent?",
+          "value": false
+        },
+        "dependent_detail": [],
+        "estimated_tax_payment_1": {
+          "label": "Quarter 1",
+          "value": 0.0
+        },
+        "estimated_tax_payment_2": {
+          "label": "Quarter 2",
+          "value": 0.0
+        },
+        "estimated_tax_payment_3": {
+          "label": "Quarter 3",
+          "value": 0.0
+        },
+        "estimated_tax_payment_4": {
+          "label": "Quarter 4",
+          "value": 0.0
+        },
+        "applied_from_prior_year": {
+          "label": "Prior year refund applied",
+          "value": 0
+        }
+      },
+      "has_ssn": {
+        "label": "Do you have a Social Security Number?",
+        "value": true
+      },
+      "w2": [
+        {
+          "who_applies_to": {
+            "label": "Whose W-2 is this?",
+            "value": "taxpayer"
+          },
+          "employer_name": {
+            "label": "Employer's name",
+            "value": "Beacon Street Pharmacy"
+          },
+          "wages": {
+            "label": "Box 1",
+            "value": 45000
+          },
+          "withholding": {
+            "label": "Box 2",
+            "value": 3900
+          },
+          "social_security_wages": {
+            "label": "Box 3",
+            "value": 45000
+          },
+          "social_security_tax": {
+            "label": "Box 4",
+            "value": 2790
+          },
+          "medicare_wages_and_tips": {
+            "label": "Box 5",
+            "value": 45000
+          },
+          "medicare_tax_withheld": {
+            "label": "Box 6",
+            "value": 652
+          },
+          "social_security_tips": {
+            "label": "Box 7",
+            "value": 0
+          },
+          "allocated_tips": {
+            "label": "Box 8",
+            "value": 0
+          },
+          "dependent_care_benefits": {
+            "label": "Box 10",
+            "value": 0
+          },
+          "statutory_employee": {
+            "label": "Box 13 statutory employee",
+            "value": false
+          }
+        }
+      ],
+      "irs1040_scheduleb": {
+        "irs1099_int": [],
+        "irs1099_div": []
+      },
+      "irs1040_schedule1": {
+        "irs1099_g": []
+      },
+      "irs1040_schedulec": [
+        {
+          "who_applies_to": {
+            "label": "Who worked for this business?",
+            "value": "taxpayer"
+          },
+          "business_name": {
+            "label": "Business name",
+            "value": "Pine Hollow Consulting"
+          },
+          "material_participate": {
+            "label": "Material participant?",
+            "value": true
+          },
+          "schc_at_risk": {
+            "label": "Personally liable?",
+            "value": true
+          },
+          "gross_receipts_cash": {
+            "label": "Gross receipts or sales",
+            "value": 12000
+          },
+          "returns_allowances": {
+            "label": "Returns",
+            "value": 0
+          },
+          "other_income": {
+            "label": "Other income",
+            "value": 0
+          },
+          "irs1099_nec": [
+            {
+              "nec_payer_name": "Marsh Creek Engineering",
+              "nec_comp": 12000,
+              "nec_fed_wh": 0
+            }
+          ],
+          "supplies": {
+            "label": "supplies",
+            "value": 400
+          }
+        }
+      ]
+    }
+  },
+  "untocaesar": {
+    "business": [
+      {
+        "business_miles": 1150
+      }
+    ],
+    "anchors": [
+      "i1040 2025, Tax Table, pages 68 to 79",
+      "i1040 2025 Line 12e standard deduction, page 34, and Standard Deduction Chart, page 35",
+      "Schedule C (2025) lines 1 to 31",
+      "Schedule SE (2025) lines 2 to 13",
+      "Form 8995 (2025) lines 1 to 15",
+      "i1040sc 2025 Line 9: 70 cents a mile, page 6"
+    ],
+    "notes": "Known answer (source 3 in docs/SPEC.md, Evals): caesar and OpenTaxSolver 2025 v23.07, run through tests/crosscheck/ots.py on 2026-11-23, share 93 lines; 93 match exactly after rounding."
+  }
+}

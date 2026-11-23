@@ -1,4 +1,7 @@
 {
+  "suites": [
+    "L"
+  ],
   "outcome": "prepared",
   "lines": {
     "1040.1a": 48994,

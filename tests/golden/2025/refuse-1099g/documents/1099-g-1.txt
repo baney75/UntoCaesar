@@ -1,0 +1,7 @@
+Test build: synthetic cases only, not for real records.
+
+Form 1099-G Certain Government Payments 2025
+============================================
+PAYER'S name                   State Employment Office
+1 Unemployment compensation    6,000.00
+4 Federal income tax withheld  600.00

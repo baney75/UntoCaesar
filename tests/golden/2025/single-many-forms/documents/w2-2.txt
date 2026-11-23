@@ -1,0 +1,19 @@
+Test build: synthetic cases only, not for real records.
+
+Form W-2 Wage and Tax Statement 2025
+====================================
+a Employee's SSN                        000-00-0002
+b Employer identification number (EIN)  00-0001002
+c Employer's name                       Kingfisher Swim School
+e Employee's name                       Test Person
+1 Wages, tips, other compensation       8,000.00
+2 Federal income tax withheld           400.00
+3 Social security wages                 8,000.00
+4 Social security tax withheld          496.00
+5 Medicare wages and tips               8,000.00
+6 Medicare tax withheld                 116.00
+7 Social security tips                  0.00
+8 Allocated tips                        0.00
+10 Dependent care benefits              0.00
+12 Codes                                (empty)
+13 Statutory employee                   (not checked)
