@@ -182,7 +182,9 @@ def next_step(job: Job) -> str | None:
         return "ask"
     state = job.state()
     ch = content_hash(facts)
-    if any(e["confirmed"] == "" for e in facts.values()) and state.get("confirm_hash") != ch:
+    # A confirm that asked nobody moves on only for its own kind of server, so Local Studio still asks.
+    unasked = state.get("unasked", {}).get(job.ctx.origin)
+    if any(e["confirmed"] == "" for e in facts.values()) and ch not in (state.get("confirm_hash"), unasked):
         return "confirm"
     if rejected(facts):
         # A value the person rejected: show the failing check, then ask for the right value.
@@ -251,9 +253,9 @@ def cmd_new(job: Job, args) -> int:
         state["clients"] = [job.ctx.client]
     job.save_state(state)
     job.save_facts({})
-    emit(job, [f"Started a tax year {year.year} job at {job.path}.",
-               "Put the person's documents in its documents folder. They never leave this computer through caesar.",
-               SAFETY])
+    where = ("Put the person's documents in its documents folder." if job.ctx.origin == "outside" else
+             "Put the person's documents in its documents folder. They never leave this computer through caesar.")
+    emit(job, [f"Started a tax year {year.year} job at {job.path}.", where, SAFETY])
     return 0
 
 
@@ -384,7 +386,10 @@ def cmd_confirm(job: Job, args) -> int:
         if rejected:
             lines.append("Rejected (read the document again and set the right value): " + ", ".join(rejected) + ".")
     state = job.state()
-    state["confirm_hash"] = content_hash(facts)
+    if isinstance(person, K.NoPersonChannel):
+        state.setdefault("unasked", {})[job.ctx.origin] = content_hash(facts)
+    else:
+        state["confirm_hash"] = content_hash(facts)
     job.save_state(state)
     emit(job, lines)
     return 0

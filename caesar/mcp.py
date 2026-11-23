@@ -73,6 +73,8 @@ class Server:
         if "id" not in msg:
             return None
         method, params = msg["method"], msg.get("params") or {}
+        if not isinstance(params, dict) or not isinstance(params.get("arguments") or {}, dict):
+            return {"jsonrpc": "2.0", "id": msg["id"], "error": {"code": -32602, "message": "params and arguments must be objects"}}
         if method == "initialize":
             info = params.get("clientInfo") or {}
             name = "".join(ch for ch in str(info.get("name", "")) if ch.isprintable()).strip()[:80]
@@ -220,9 +222,16 @@ def main() -> int:
         if not raw.strip():
             continue
         try:
-            reply = server.handle(json.loads(raw))
+            msg = json.loads(raw)
         except ValueError:
+            msg = None
             reply = {"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": "not JSON"}}
+        if msg is not None:
+            try:
+                reply = server.handle(msg)
+            except Exception as err:  # one bad call must not end the server
+                ident = msg.get("id") if isinstance(msg, dict) else None
+                reply = {"jsonrpc": "2.0", "id": ident, "error": {"code": -32603, "message": f"caesar-mcp: {type(err).__name__}"}}
         if reply is not None:
             out.write(json.dumps(reply).encode("utf-8") + b"\n")
             out.flush()

@@ -142,6 +142,10 @@ def test_outside_job_shows_where_its_figures_go(root):
     call(local(root), "facts", job=str(path))
     state = json.loads((path / "state.json").read_text(encoding="utf-8"))
     assert state["origin"] == "outside" and state["clients"] == ["Grok Bot"]
+    # The outside server asked nobody, so Local Studio still offers confirm.
+    status, _ = call(local(root), "status", job=str(path))
+    assert status.strip().splitlines()[-1].endswith(" confirm")
+    assert not any("never leave this computer" in r for r in replies)
 
 
 def test_notice_comes_once_per_job(root):
@@ -161,6 +165,9 @@ def test_protocol_basics(root):
     assert server.handle({"jsonrpc": "2.0", "id": 3, "method": "ping"})["result"] == {}
     assert server.handle({"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "caesar_rm"}})["error"]
     assert server.handle({"jsonrpc": "2.0", "id": 5, "method": "nope"})["error"]["code"] == -32601
+    bad = {"jsonrpc": "2.0", "id": 6, "method": "tools/call", "params": {"name": "caesar_status", "arguments": "x"}}
+    assert server.handle(bad)["error"]["code"] == -32602
+    assert server.handle({"jsonrpc": "2.0", "id": 8, "method": "tools/call", "params": [1]})["error"]["code"] == -32602
 
 
 def test_the_launcher_serves_over_stdio(tmp_path):
@@ -175,3 +182,14 @@ def test_the_launcher_serves_over_stdio(tmp_path):
     text = replies[1]["result"]["content"][0]["text"]
     assert NOTICE in text and "Started a tax year 2025 job" in text
     assert str(ROOT / "bin" / "caesar") in text.splitlines()[-1]
+
+    # A corrupt state.json fails that one call, under its own id, and the server keeps serving.
+    state = next(tmp_path.rglob("state.json"))
+    state.write_text("{not json", encoding="utf-8")
+    lines = [{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"clientInfo": {"name": "stdio test"}}},
+             {"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "caesar_status", "arguments": {"job": "j"}}},
+             {"jsonrpc": "2.0", "id": 3, "method": "ping"}]
+    done = subprocess.run([sys.executable, str(ROOT / "bin" / "caesar-mcp")], input="\n".join(map(json.dumps, lines)) + "\n",
+                          capture_output=True, text=True, env=env, timeout=60)
+    replies = [json.loads(line) for line in done.stdout.splitlines()]
+    assert [r["id"] for r in replies] == [1, 2, 3] and replies[2]["result"] == {}
