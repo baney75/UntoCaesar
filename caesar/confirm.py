@@ -1,68 +1,37 @@
-"""The person channel for caesar confirm: the stub of Local Studio's ask-user hook.
+"""The person channel for caesar confirm.
 
 Confirmation never goes through the model. caesar confirm shows each fact, its value and its
-source to the person and records only the person's answer. Local Studio's question card now
-guarantees that the person, not the session's model, answers it (local-studio#8), but this build
-has no caesar-mcp yet, the MCP server that asks through it (docs/SPEC.md). Until it lands:
-
-- With no person channel, caesar records no confirmation, and the best state a return
-  reaches is "computed, not confirmed".
-- The eval harness's scripted person answers through CAESAR_SCRIPTED_PERSON, a JSON file
-  {"facts": {"<fact>": "<true value>", ...}}. It says yes when the value caesar shows matches
-  the true value and no otherwise, so a misread fact ends in a failing check. Its answers are
-  recorded as the scripted test person's, never as a real person's.
+source to the person and records only the person's answer, signed in the ledger (ledger.py). The
+one channel will be Local Studio's question card, asked from caesar-mcp's process; until it lands
+there is no channel, nothing is recorded and the best state a return reaches is "computed, not
+confirmed". No variable or file turns confirmation on: the
+golden runner's scripted person replaces channel() inside its own process (tests/golden/runner.py).
 """
 
 from __future__ import annotations
 
-import json
-import os
-from pathlib import Path
-
 from . import facts as F
 
 SCRIPTED = F.SCRIPTED
+PERSON = F.PERSON
 
 
 class AskUser:
-    """One yes or no question to the person. Returns "yes", "no", or None when no one answered."""
+    """One yes or no question to the person. Returns "yes", "no", or None when no one answered (see why)."""
 
     name = ""
+    why = ""
 
     def ask(self, fact: str, question: str) -> str | None:
         raise NotImplementedError
 
 
 class NoPersonChannel(AskUser):
-    name = ""
-
     def ask(self, fact: str, question: str) -> str | None:
         return None
 
 
-class ScriptedPerson(AskUser):
-    name = SCRIPTED
-
-    def __init__(self, path: Path, facts: dict):
-        with path.open(encoding="utf-8") as f:
-            self.truth = json.load(f).get("facts", {})
-        self.facts = facts
-
-    def ask(self, fact: str, question: str) -> str | None:
-        if fact not in self.truth:
-            return "no"
-        spec = F.spec_for(self.facts, fact)
-        try:
-            true_value = F.normalize(spec.kind, str(self.truth[fact])) if spec else str(self.truth[fact])
-        except ValueError:
-            return "no"
-        return "yes" if self.facts[fact]["value"] == true_value else "no"
-
-
-def channel(facts: dict) -> AskUser:
-    path = os.environ.get("CAESAR_SCRIPTED_PERSON")
-    if path:
-        return ScriptedPerson(Path(path), facts)
+def channel() -> AskUser:
     return NoPersonChannel()
 
 

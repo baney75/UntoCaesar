@@ -23,7 +23,6 @@ def run(job, *args):
 @pytest.fixture
 def job(tmp_path, monkeypatch):
     monkeypatch.setenv("CAESAR_CMD", "caesar")
-    monkeypatch.delenv("CAESAR_SCRIPTED_PERSON", raising=False)
     return tmp_path / "job"
 
 
@@ -157,19 +156,19 @@ def test_eic_child_question_is_asked_without_dependents(job):
     assert "even one you do not list as a dependent" in out
 
 
-@pytest.mark.parametrize("by", ["person", "", "Person"])
-def test_a_confirmation_caesar_did_not_record_is_refused_on_load(job, by):
-    # first-F2: only caesar confirm's own channels can mark a fact confirmed.
+@pytest.mark.parametrize("by", ["the person, in Local Studio", "scripted test person", "", "Person"])
+def test_a_flag_written_into_facts_toml_is_ignored(job, by):
+    # #9 first-F1: only a signed ledger entry confirms a fact, so an edited facts.toml confirms nothing.
     run(job, "new")
     answer(job, ("screen.ssa1099", "no"))
     path = job / "facts.toml"
     text = path.read_text(encoding="utf-8").replace('confirmed = ""\nby = ""', f'confirmed = "yes"\nby = "{by}"')
     path.write_text(text, encoding="utf-8")
+    assert cli.Job(job).facts()["screen.ssa1099"]["confirmed"] == ""
     for args in (("status",), ("check",), ("done",)):
         code, out = run(job, *args)
         check_message(out)
-        assert code == 2 and "only caesar confirm records" in out
-        assert out.strip().endswith("NEXT: none")
+        assert code != 2 and "could not finish" not in out
 
 
 def to_w2_employer(job):

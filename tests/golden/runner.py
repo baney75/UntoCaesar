@@ -4,8 +4,10 @@ The runner follows caesar's NEXT: lines the way a model does. It runs each one t
 and when NEXT is a caesar set template it fills each <...> with the case's value and source
 (tests/golden/to_facts.py) as they are, with no escaping, so the shell path is what is tested. It
 stops at NEXT: none or at a set for a fact already answered (a fix only a person can make). The
-scripted person answers caesar confirm from the case's true values. Scoring follows TaxCalcBench: each Form 1040 line
-in output.xml is scored strict (exact) and lenient (within $5).
+scripted person answers caesar confirm from the case's true values. It is a test seam inside this
+process only: scripted_person() swaps caesar's person channel and ledger key for the run, so no
+variable or file a model's bash could set turns confirmation on. Scoring follows TaxCalcBench:
+each Form 1040 line in output.xml is scored strict (exact) and lenient (within $5).
 
 Usage: python3 tests/golden/runner.py [case folder ...]   prints a score table.
 """
@@ -17,6 +19,7 @@ import io
 import json
 import os
 import re
+import secrets
 import shlex
 import shutil
 import subprocess
@@ -32,6 +35,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import to_facts  # noqa: E402
 
 from caesar import cli  # noqa: E402
+from caesar import confirm as K  # noqa: E402
+from caesar import keystore  # noqa: E402
 
 CASES = Path(__file__).resolve().parent / "2025"
 LENIENT = 5
@@ -104,22 +109,53 @@ def fill(template: str, value: str, source: str) -> str:
     return HOLE.sub(lambda m: next(texts), template)
 
 
+class ScriptedPerson(K.AskUser):
+    """Says yes when the value caesar shows matches the case's true value, and no otherwise, so a
+    misread fact ends in a failing check. Its answers are recorded as the scripted test person's."""
+
+    name = K.SCRIPTED
+
+    def __init__(self, truth: dict, job: Path):
+        self.truth = truth
+        self.job = job
+
+    def ask(self, fact: str, question: str) -> str | None:
+        facts = cli.Job(self.job).facts()
+        if fact not in self.truth:
+            return "no"
+        spec = to_facts.F.spec_for(facts, fact)
+        try:
+            true_value = to_facts.F.normalize(spec.kind, str(self.truth[fact])) if spec else str(self.truth[fact])
+        except ValueError:
+            return "no"
+        return "yes" if facts[fact]["value"] == true_value else "no"
+
+
+@contextlib.contextmanager
+def scripted_person(truth: dict, job: Path):
+    """For this process only: caesar confirm asks the scripted person and signs with a key made for the run."""
+    key = secrets.token_bytes(32)
+    saved = K.channel, keystore.load_key
+    K.channel = lambda: ScriptedPerson(truth, job)
+    keystore.load_key = lambda create, service=keystore.SERVICE: (key, "")
+    try:
+        yield
+    finally:
+        K.channel, keystore.load_key = saved
+
+
 def run(folder: Path, scripted: bool = True, workdir: Path | None = None) -> dict:
     case = to_facts.load(folder)
     work = Path(workdir or tempfile.mkdtemp(prefix="caesar-golden-")).resolve()
     work.mkdir(parents=True, exist_ok=True)
     job = work / "job"
-    env = {"CAESAR_CMD": "caesar"}
-    if scripted:
-        truth = work / "person.json"
-        truth.write_text(json.dumps(to_facts.truth(case)), encoding="utf-8")
-        env["CAESAR_SCRIPTED_PERSON"] = str(truth)
-    saved = {k: os.environ.get(k) for k in ("CAESAR_CMD", "CAESAR_SCRIPTED_PERSON")}
-    os.environ.pop("CAESAR_SCRIPTED_PERSON", None)
-    os.environ.update(env)
+    saved = os.environ.get("CAESAR_CMD")
+    os.environ["CAESAR_CMD"] = "caesar"
     given = to_facts.all_facts(case)
     transcript = []
+    person = scripted_person(to_facts.truth(case)["facts"], job) if scripted else contextlib.nullcontext()
     try:
+        person.__enter__()
         code, out = caesar(job, "new")
         transcript.append(("new", code, out))
         refused_at = ""
@@ -146,11 +182,11 @@ def run(folder: Path, scripted: bool = True, workdir: Path | None = None) -> dic
         else:
             raise AssertionError("caesar never said NEXT: none")
     finally:
-        for k, val in saved.items():
-            if val is None:
-                os.environ.pop(k, None)
-            else:
-                os.environ[k] = val
+        person.__exit__(None, None, None)
+        if saved is None:
+            os.environ.pop("CAESAR_CMD", None)
+        else:
+            os.environ["CAESAR_CMD"] = saved
 
     state = json.loads((job / "state.json").read_text(encoding="utf-8"))
     ret = json.loads((job / "return.json").read_text(encoding="utf-8")) if (job / "return.json").exists() else None
