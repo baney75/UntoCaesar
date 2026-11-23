@@ -3,3 +3,5 @@ caesar-job/
 __pycache__/
 .pytest_cache/
 .venv/
+evals/results/*/runs/
+evals/results/*/.seam/
