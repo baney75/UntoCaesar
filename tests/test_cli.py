@@ -7,6 +7,7 @@ import pytest
 
 from caesar import checks as C
 from caesar import cli
+from caesar import engine, yeardata
 from caesar import facts as F
 
 BANNER = "Test build: synthetic cases only, not for real records."
@@ -216,3 +217,12 @@ def test_set_stdin_takes_nothing_from_the_command_line(job, monkeypatch):
     assert code == 2 and "from the heredoc only" in out
     code, out = run(job, "set", "w2.1.employer")
     assert code == 2 and "needs a value and --source" in out
+
+
+@pytest.mark.parametrize("box6, refused", [("1450", False), ("1451.01", True)])
+def test_additional_medicare_tax_withheld_below_every_8959_threshold_is_refused(box6, refused):
+    # sol-F1: box 6 over 1.45% of box 5 plus $1 is Additional Medicare Tax withheld, even on $100,000 of wages.
+    facts = {name: {"value": v, "source": "answer", "confirmed": "yes"} for name, v in [("filing_status", "single"),
+             ("w2.count", "1"), ("w2.1.box1", "100000"), ("w2.1.box5", "100000"), ("w2.1.box6", box6)]}
+    report = C.run(facts, engine.compute(facts, yeardata.load(2025)), yeardata.load(2025))
+    assert any("Form 8959 is needed to claim it" in f.message for f in report.refusals) == refused
