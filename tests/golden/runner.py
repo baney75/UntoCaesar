@@ -106,7 +106,8 @@ def fill(template: str, value: str, source: str) -> str:
 
 def run(folder: Path, scripted: bool = True, workdir: Path | None = None) -> dict:
     case = to_facts.load(folder)
-    work = Path(workdir or tempfile.mkdtemp(prefix="caesar-golden-"))
+    work = Path(workdir or tempfile.mkdtemp(prefix="caesar-golden-")).resolve()
+    work.mkdir(parents=True, exist_ok=True)
     job = work / "job"
     env = {"CAESAR_CMD": "caesar"}
     if scripted:

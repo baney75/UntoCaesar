@@ -1,10 +1,11 @@
-"""caesar/ imports nothing that can reach the network, and nothing outside the standard library."""
+"""caesar/ and bin/ import nothing that can reach the network, and nothing outside the standard library."""
 
 import ast
 import sys
 from pathlib import Path
 
-PACKAGE = Path(__file__).resolve().parent.parent / "caesar"
+ROOT = Path(__file__).resolve().parent.parent
+PACKAGE = ROOT / "caesar"
 BANNED = {"socket", "urllib", "http", "ssl", "ftplib", "smtplib", "poplib", "imaplib", "nntplib", "telnetlib",
           "xmlrpc", "socketserver", "asyncio", "webbrowser", "wsgiref", "email", "mailbox", "selectors", "select",
           "multiprocessing", "ctypes"}
@@ -23,13 +24,16 @@ def imports(path):
 
 
 def test_no_network_or_third_party_imports():
-    files = sorted(PACKAGE.rglob("*.py"))
-    assert files
+    files = sorted(PACKAGE.rglob("*.py")) + sorted(p for p in (ROOT / "bin").iterdir() if p.is_file())
+    assert len(files) > 2
     found = {}
     for path in files:
+        rel = path.relative_to(ROOT).as_posix()
         for name in imports(path):
+            if name == "caesar":
+                continue
             if name in BANNED or name == "__import__" or name not in sys.stdlib_module_names:
-                found.setdefault(str(path.relative_to(PACKAGE.parent)), []).append(name)
+                found.setdefault(rel, []).append(name)
     assert not found, f"forbidden imports: {found}"
 
 
