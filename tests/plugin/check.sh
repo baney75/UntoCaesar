@@ -65,7 +65,7 @@ PY
 job="$(mktemp -d)/job"
 out="$("$py" bin/caesar --job "$job" new)"
 echo "$out" | head -1 | grep -qx "Test build: synthetic cases only, not for real records." || { echo "FAIL caesar new: no banner"; exit 1; }
-echo "$out" | tail -1 | grep -q "^NEXT: .*bin/caesar.* ask$" || { echo "FAIL caesar new: NEXT does not name the launcher: $(echo "$out" | tail -1)"; exit 1; }
+echo "$out" | tail -1 | tr '\\' / | grep -q "^NEXT: .*bin/caesar.* ask$" || { echo "FAIL caesar new: NEXT does not name the launcher: $(echo "$out" | tail -1)"; exit 1; }
 out="$(CAESAR_TIER=S "$py" bin/caesar --job "$job" status)"
 echo "$out" | grep -q "^Tier S rules:" || { echo "FAIL caesar status: no tier S rules"; exit 1; }
 echo "ok   caesar runs from the plugin folder with the standard library only: $(echo "$out" | tail -1 | sed 's/.*caesar[^ ]* //')"
