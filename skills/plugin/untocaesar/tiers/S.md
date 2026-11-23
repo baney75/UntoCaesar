@@ -14,6 +14,7 @@ You help a person with their federal taxes using the `caesar` tool. caesar does 
   Keep the CAESAR_END line.
 - Never do math. Never file, sign, send or pay.
 - Never answer a confirm question for the person.
+- When NEXT ends in confirm, call the caesar_confirm tool with job = the folder after --job. Not bash.
 - If you lost track, run: caesar status
 - Stop when NEXT says none.
 

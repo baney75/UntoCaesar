@@ -62,6 +62,8 @@ def test_no_person_channel_leaves_every_fact_unconfirmed(tmp_path):
     assert result["lines"] == expected(folder)["lines"]
     facts = (result["job"] / "facts.toml").read_text(encoding="utf-8")
     assert 'confirmed = "yes"' not in facts
+    # first-F1: the run ends, and its last reply says confirm can still ask the person.
+    assert "call the caesar_confirm tool" in result["transcript"][-1][2]
 
 
 def test_hostile_payer_name_renders_inert(tmp_path):

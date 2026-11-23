@@ -233,6 +233,14 @@ def emit(job: Job, lines: list[str], step: str | None = "auto") -> None:
     print(BANNER)
     for line in lines:
         print(line)
+    if step is None and job.ctx.can_confirm:
+        try:
+            waiting = [n for n, e in job.facts().items() if e["confirmed"] == ""] if job.exists() else []
+        except (OSError, ValueError):
+            waiting = []
+        if waiting:
+            print(f"Not confirmed yet: {len(waiting)} facts. When the person is ready, call the caesar_confirm tool"
+                  " with this job; it asks only about those.")
     # confirm runs as caesar-mcp's tool, whose working folder is not the model's, so it names the job in full.
     print(f"NEXT: {prog(job, absolute=step == 'confirm')} {step}" if step else "NEXT: none")
 
@@ -378,8 +386,9 @@ def cmd_confirm(job: Job, args) -> int:
             raise Stop([f"There is no fact named {name} to confirm."])
     person = K.channel() if job.ctx.can_confirm else K.NoPersonChannel()
     key, why = (None, "") if isinstance(person, K.NoPersonChannel) else keystore.load_key(create=True)
+    answers = []
     if isinstance(person, K.NoPersonChannel):
-        where = ("No person channel here: caesar-mcp does not ask through Local Studio's question card yet."
+        where = ("No person channel here: only caesar-mcp's confirm tool, in a Local Studio thread, can ask the person."
                  if job.ctx.can_confirm else "This assistant is outside Local Studio, so it cannot ask the person.")
         lines = ["caesar shows each fact to the person and records only the person's answer.",
                  f"{where} caesar records no confirmation, so the best state this return can reach is: computed, not"
@@ -392,7 +401,6 @@ def cmd_confirm(job: Job, args) -> int:
                  " it records nothing and every fact stays unconfirmed. The best state this return can reach is:"
                  " computed, not confirmed."]
     else:
-        answers = []
         for name in names:
             answer = person.ask(name, K.question(name, facts[name]))
             if answer is None:
@@ -411,7 +419,10 @@ def cmd_confirm(job: Job, args) -> int:
             lines.append("Rejected (read the document again and set the right value): " + ", ".join(rejected_now) + ".")
     job.save_facts(facts)
     state = job.state()
-    if isinstance(person, K.NoPersonChannel) or key is None:  # nobody was asked
+    if any(e["confirmed"] == "" for e in facts.values()):
+        # Not every fact answered (outside, no channel, no keychain, the person stopped, or one fact asked).
+        # This kind of server moves on, bash included; the reply at the end says confirm can still ask
+        # (emit), and an outside job still gets confirm in Local Studio.
         state.setdefault("unasked", {})[job.ctx.origin] = content_hash(facts)
     else:
         state["confirm_hash"] = content_hash(facts)
