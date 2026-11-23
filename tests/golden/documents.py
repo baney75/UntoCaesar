@@ -31,6 +31,46 @@ BANNER = "Test build: synthetic cases only, not for real records."
 SSN = "000-00-{:04d}"
 EIN = "00-{:07d}"
 
+# The label each fact's value sits after on its document, for the documents and for the eval's
+# no-model reader (evals/drivers.py), which fills facts only from what the documents say.
+W2_LABELS = {"employer": "c Employer's name", "box1": "1 Wages, tips, other compensation",
+             "box2": "2 Federal income tax withheld", "box3": "3 Social security wages",
+             "box4": "4 Social security tax withheld", "box5": "5 Medicare wages and tips",
+             "box6": "6 Medicare tax withheld", "box7": "7 Social security tips", "box8": "8 Allocated tips",
+             "box10": "10 Dependent care benefits", "box12": "12 Codes", "box13_statutory": "13 Statutory employee"}
+W2_FIELDS = [("box2", "withholding"), ("box3", "social_security_wages"), ("box4", "social_security_tax"),
+             ("box5", "medicare_wages_and_tips"), ("box6", "medicare_tax_withheld"), ("box7", "social_security_tips"),
+             ("box8", "allocated_tips"), ("box10", "dependent_care_benefits")]
+INT_LABELS = {"payer": "PAYER'S name", "box1": "1 Interest income", "box2": "2 Early withdrawal penalty",
+              "box3": "3 Interest on U.S. Savings Bonds and Treasury obligations",
+              "box4": "4 Federal income tax withheld", "box8": "8 Tax-exempt interest"}
+DIV_LABELS = {"payer": "PAYER'S name", "box1a": "1a Total ordinary dividends", "box1b": "1b Qualified dividends",
+              "box2a": "2a Total capital gain distr.", "box4": "4 Federal income tax withheld"}
+NEC_LABELS = {"payer": "PAYER'S name", "box1": "1 Nonemployee compensation",
+              "box3": "3 Excess golden parachute payments", "box4": "4 Federal income tax withheld"}
+BUSINESS_LABELS = {
+    "gross_receipts": "Gross receipts for 2025 (all customers, including every 1099-NEC)",
+    "returns": "Returns and refunds to customers", "other_income": "Other business income",
+    "advertising": "Advertising", "commissions": "Commissions and fees paid", "contract_labor": "Contract labor",
+    "employee_benefits": "Employee benefit programs", "insurance": "Insurance (not health)",
+    "mortgage_interest": "Mortgage interest, business property", "other_interest": "Other business interest",
+    "legal_professional": "Legal and professional services", "office": "Office expense",
+    "pension_plans": "Pension and profit-sharing plans", "rent_equipment": "Rent or lease of equipment",
+    "rent_other": "Rent of other business property", "repairs": "Repairs and maintenance", "supplies": "Supplies",
+    "taxes_licenses": "Taxes and licenses", "travel": "Travel (not meals)", "meals": "Business meals, full cost",
+    "utilities": "Utilities", "wages": "Wages paid to employees",
+    "business_miles": "Business miles driven (from the mileage log)", "parking_tolls": "Business parking and tolls"}
+BUSINESS_FIELDS = [("gross_receipts", "gross_receipts_cash"), ("returns", "returns_allowances"),
+                   ("other_income", "other_income"), ("advertising", "advertising"),
+                   ("commissions", "commissions_fees"), ("contract_labor", "contract_labor"),
+                   ("employee_benefits", "employee_benefit"), ("insurance", "insurance"),
+                   ("mortgage_interest", "mortgage_interest"), ("other_interest", "other_interest"),
+                   ("legal_professional", "legal_professional"), ("office", "office_expense"),
+                   ("pension_plans", "pension_psp"), ("rent_equipment", "machinery_equip_rent"),
+                   ("rent_other", "other_rent"), ("repairs", "repairs_maintenance"), ("supplies", "supplies"),
+                   ("taxes_licenses", "tax_licenses"), ("travel", "travel"), ("meals", "meal_entertainment"),
+                   ("utilities", "utilities"), ("wages", "wages_expense")]
+
 
 def money(x) -> str:
     return f"{float(x or 0):,.2f}"
@@ -62,40 +102,35 @@ def documents(case: dict) -> dict[str, str]:
         who = v(w, "who_applies_to", "taxpayer")
         box1 = misread.get(f"w2.{i}.box1", v(w, "wages", 0))
         box12 = extra.get("w2_box12", {}).get(str(i), "none")
+        values = {"employer": v(w, "employer_name", f"employer {i}"), "box1": money(box1),
+                  "box12": box12 if box12 != "none" else "(empty)",
+                  "box13_statutory": "X" if v(w, "statutory_employee") else "(not checked)"}
+        for box, key in W2_FIELDS:
+            values[box] = money(v(w, key))
         out[f"w2-{i}.txt"] = form("Form W-2 Wage and Tax Statement 2025", [
             ("a Employee's SSN", ssn), ("b Employer identification number (EIN)", ein),
-            ("c Employer's name", v(w, "employer_name", f"employer {i}")), ("e Employee's name", names[who]),
-            ("1 Wages, tips, other compensation", money(box1)), ("2 Federal income tax withheld", money(v(w, "withholding"))),
-            ("3 Social security wages", money(v(w, "social_security_wages"))),
-            ("4 Social security tax withheld", money(v(w, "social_security_tax"))),
-            ("5 Medicare wages and tips", money(v(w, "medicare_wages_and_tips"))),
-            ("6 Medicare tax withheld", money(v(w, "medicare_tax_withheld"))),
-            ("7 Social security tips", money(v(w, "social_security_tips"))), ("8 Allocated tips", money(v(w, "allocated_tips"))),
-            ("10 Dependent care benefits", money(v(w, "dependent_care_benefits"))),
-            ("12 Codes", box12 if box12 != "none" else "(empty)"),
-            ("13 Statutory employee", "X" if v(w, "statutory_employee") else "(not checked)"),
-        ])
+            (W2_LABELS["employer"], values["employer"]), ("e Employee's name", names[who]),
+            *[(W2_LABELS[box], values[box]) for box in W2_LABELS if box != "employer"]])
 
     sb = rd.get("irs1040_scheduleb") or {}
     for i, x in enumerate(sb.get("irs1099_int") or [], 1):
         ssn, ein = ids()
         out[f"1099-int-{i}.txt"] = form("Form 1099-INT Interest Income 2025", [
-            ("PAYER'S name", v(x, "interest_1099int_payer")), ("PAYER'S TIN", ein), ("RECIPIENT'S TIN", ssn),
-            ("1 Interest income", money(v(x, "interest_1099int_interest"))),
-            ("2 Early withdrawal penalty", money(v(x, "interest_1099int_early_withdrawal"))),
-            ("3 Interest on U.S. Savings Bonds and Treasury obligations",
-             money(v(x, "interest_1099int_us_saving_bond_treasury_obligations"))),
-            ("4 Federal income tax withheld", money(v(x, "interest_1099int_fed_inc_tax_withheld"))),
-            ("8 Tax-exempt interest", money(v(x, "interest_1099int_tax_exempt"))),
+            (INT_LABELS["payer"], v(x, "interest_1099int_payer")), ("PAYER'S TIN", ein), ("RECIPIENT'S TIN", ssn),
+            (INT_LABELS["box1"], money(v(x, "interest_1099int_interest"))),
+            (INT_LABELS["box2"], money(v(x, "interest_1099int_early_withdrawal"))),
+            (INT_LABELS["box3"], money(v(x, "interest_1099int_us_saving_bond_treasury_obligations"))),
+            (INT_LABELS["box4"], money(v(x, "interest_1099int_fed_inc_tax_withheld"))),
+            (INT_LABELS["box8"], money(v(x, "interest_1099int_tax_exempt"))),
         ])
     for i, x in enumerate(sb.get("irs1099_div") or [], 1):
         ssn, ein = ids()
         out[f"1099-div-{i}.txt"] = form("Form 1099-DIV Dividends and Distributions 2025", [
-            ("PAYER'S name", v(x, "dividend_1099div_payer")), ("PAYER'S TIN", ein), ("RECIPIENT'S TIN", ssn),
-            ("1a Total ordinary dividends", money(v(x, "dividend_1099div_ordinary_div"))),
-            ("1b Qualified dividends", money(v(x, "dividend_1099div_qualified_div"))),
-            ("2a Total capital gain distr.", money(v(x, "dividend_1099div_capital_gain_distr"))),
-            ("4 Federal income tax withheld", money(v(x, "dividend_1099div_federal_inc_tax_withheld"))),
+            (DIV_LABELS["payer"], v(x, "dividend_1099div_payer")), ("PAYER'S TIN", ein), ("RECIPIENT'S TIN", ssn),
+            (DIV_LABELS["box1a"], money(v(x, "dividend_1099div_ordinary_div"))),
+            (DIV_LABELS["box1b"], money(v(x, "dividend_1099div_qualified_div"))),
+            (DIV_LABELS["box2a"], money(v(x, "dividend_1099div_capital_gain_distr"))),
+            (DIV_LABELS["box4"], money(v(x, "dividend_1099div_federal_inc_tax_withheld"))),
         ])
 
     nec = 0
@@ -104,36 +139,24 @@ def documents(case: dict) -> dict[str, str]:
             nec += 1
             ssn, ein = ids()
             out[f"1099-nec-{nec}.txt"] = form("Form 1099-NEC Nonemployee Compensation 2025", [
-                ("PAYER'S name", x.get("nec_payer_name")), ("PAYER'S TIN", ein), ("RECIPIENT'S TIN", ssn),
+                (NEC_LABELS["payer"], x.get("nec_payer_name")), ("PAYER'S TIN", ein), ("RECIPIENT'S TIN", ssn),
                 ("RECIPIENT'S name", names[v(c, "who_applies_to", "taxpayer")]),
-                ("1 Nonemployee compensation", money(x.get("nec_comp"))),
-                ("3 Excess golden parachute payments", money(x.get("nec_golden_parachute"))),
-                ("4 Federal income tax withheld", money(x.get("nec_fed_wh"))),
+                (NEC_LABELS["box1"], money(x.get("nec_comp"))),
+                (NEC_LABELS["box3"], money(x.get("nec_golden_parachute"))),
+                (NEC_LABELS["box4"], money(x.get("nec_fed_wh"))),
             ])
         listed = extra.get("business") or []
         more = listed[b - 1] if b <= len(listed) else {}
-        rows = [("Business", v(c, "business_name")), ("Owner", names[v(c, "who_applies_to", "taxpayer")]),
-                ("Gross receipts for 2025 (all customers, including every 1099-NEC)", money(v(c, "gross_receipts_cash"))),
-                ("Returns and refunds to customers", money(v(c, "returns_allowances"))),
-                ("Other business income", money(v(c, "other_income")))]
-        for label, field in (("Advertising", "advertising"), ("Commissions and fees paid", "commissions_fees"),
-                             ("Contract labor", "contract_labor"), ("Employee benefit programs", "employee_benefit"),
-                             ("Insurance (not health)", "insurance"), ("Mortgage interest, business property", "mortgage_interest"),
-                             ("Other business interest", "other_interest"), ("Legal and professional services", "legal_professional"),
-                             ("Office expense", "office_expense"), ("Pension and profit-sharing plans", "pension_psp"),
-                             ("Rent or lease of equipment", "machinery_equip_rent"), ("Rent of other business property", "other_rent"),
-                             ("Repairs and maintenance", "repairs_maintenance"), ("Supplies", "supplies"),
-                             ("Taxes and licenses", "tax_licenses"), ("Travel (not meals)", "travel"),
-                             ("Business meals, full cost", "meal_entertainment"), ("Utilities", "utilities"),
-                             ("Wages paid to employees", "wages_expense")):
-            rows.append((label, money(v(c, field, 0))))
+        rows = [("Business", v(c, "business_name")), ("Owner", names[v(c, "who_applies_to", "taxpayer")])]
+        for key, field in BUSINESS_FIELDS:
+            rows.append((BUSINESS_LABELS[key], money(v(c, field, 0))))
         other = c.get("other_expense_detail") or []
         for x in other:
             rows.append((f"Other expense: {x.get('description', 'other')}", money(x.get("amount", x.get("value", 0)))))
         if not other:
             rows.append(("Other expenses", money(0)))
-        rows.append(("Business miles driven (from the mileage log)", f"{int(more.get('business_miles', 0)):,}"))
-        rows.append(("Business parking and tolls", money(more.get("parking_tolls", 0))))
+        rows.append((BUSINESS_LABELS["business_miles"], f"{int(more.get('business_miles', 0)):,}"))
+        rows.append((BUSINESS_LABELS["parking_tolls"], money(more.get("parking_tolls", 0))))
         out[f"business-{b}-records.txt"] = form(f"2025 business records summary: {v(c, 'business_name')}", rows)
 
     ssa = (rd.get("ssa_1099") or {}).get("ssa_1099_grp") or []
