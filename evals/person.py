@@ -13,6 +13,7 @@ elsewhere, by the scripted person inside caesar-mcp (evals/seam.py).
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from caesar import cli
@@ -55,29 +56,52 @@ def document_label(name: str) -> str:
     return "document"
 
 
+WORD = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
+SMALL = {"the", "and", "for", "you", "your", "did", "was", "were", "what", "with", "that", "this", "any", "from", "2025",
+         "spouse", "have", "how", "many", "much", "does", "are", "get", "got", "say", "its", "his", "her", "their"}
+
+
+def words(text: str) -> set[str]:
+    return {w for w in WORD.findall(text.lower()) if len(w) > 2 and w not in SMALL}
+
+
+def asks(said: str, question: str) -> bool:
+    """Whether the model's message puts caesar's question to the person: most of its words, or the fact name."""
+    want = words(question)
+    return bool(want) and len(want & words(said)) >= 0.5 * len(want)
+
+
 class Person:
     def __init__(self, answers: dict, job: Path):
         self.facts = answers["facts"]
         self.job = job
-        self.idle = 0
+        self.idle = 0  # replies in a row that found caesar waiting on the same thing
+        self.last: tuple[str, str | None] | None = None
 
     def reply(self, said: str) -> tuple[str, bool]:
         """(the person's reply, whether the conversation is over)."""
-        kind, fact = pending(self.job)
+        now = pending(self.job)
+        self.idle = self.idle + 1 if now == self.last else 0
+        self.last = now
+        kind, fact = now
         if kind == "done":
             return "Thank you. That is all I need.", True
         if kind == "confirm":
-            self.idle += 1
             return "Please ask me to confirm the facts with the caesar_confirm tool.", False
         if kind == "go" or fact not in self.facts:
-            self.idle += 1
             return "Please go on.", False
-        self.idle = 0
         entry = self.facts[fact]
         if kind == "fix" and "correction" in entry:
-            return (f"That copy of the form is wrong. The right amount for {fact} is {entry['correction']}."
-                    " Use source: answer."), False
-        if "document" in entry:
+            text = (f"That copy of the form is wrong. The right amount for {fact} is {entry['correction']}."
+                    " Use source: answer.")
+        elif "document" in entry:
             doc = entry["document"]
-            return f"That is on my {document_label(doc)}. It is in the documents folder: documents/{doc}", False
-        return phrase(fact, entry["say"]), False
+            text = f"That is on my {document_label(doc)}. It is in the documents folder: documents/{doc}"
+        else:
+            text = phrase(fact, entry["say"])
+        spec = F.spec_for(cli.Job(self.job).facts(), fact)
+        question = spec.question if spec else fact
+        if kind == "ask" and fact not in said and not asks(said, question):
+            # The model asked something else. A person answers the question that is actually next.
+            text = f"I am not sure what you are asking. The next question on my list is: {question} My answer: {text}"
+        return text, False

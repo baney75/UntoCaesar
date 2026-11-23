@@ -160,7 +160,8 @@ def first_turn(card: str, job: Path) -> str:
     skill = (SKILL / "SKILL.md").read_text(encoding="utf-8")
     tier = (SKILL / "tiers" / f"{card}.md").read_text(encoding="utf-8")
     return (f"<skill>\n{skill}\n\n{tier}\n</skill>\n/taxes\n"
-            f"Please do my 2025 federal taxes. I put my tax documents in {job.name}/documents.")
+            f"Please do my 2025 federal taxes. This thread's tax job folder is {job} (bash runs in {job.parent},"
+            f" where caesar uses it by default), and my tax documents are in {job.name}/documents.")
 
 
 def trim(messages: list[dict], budget: int) -> list[dict]:
@@ -238,7 +239,8 @@ def plugin_run(folder: Path, k: int, driver, args, out: Path) -> dict:
                                           "function": {"name": c["name"], "arguments": json.dumps(c["arguments"])}}
                                          for c in reply["tool_calls"]]
                 messages.append(msg)
-                log.append({"assistant": reply})
+                log.append({"assistant": reply, "seconds": round(time.time() - started, 1)})
+                save_transcript(work, messages, log)
                 if reply["tool_calls"]:
                     for c in reply["tool_calls"]:
                         steps += 1
@@ -278,9 +280,13 @@ def plugin_run(folder: Path, k: int, driver, args, out: Path) -> dict:
     if explaining:
         rec["explanation"] = explanation
         rec["explain_reference"] = {line: explain_reference(job, env, line) for line in EXPLAIN_LINES}
-    (work / "transcript.json").write_text(json.dumps({"messages": messages, "log": log}, indent=1), encoding="utf-8")
+    save_transcript(work, messages, log)
     shutil.rmtree(seam_dir, ignore_errors=True)
     return rec
+
+
+def save_transcript(work: Path, messages: list[dict], log: list[dict]) -> None:
+    (work / "transcript.json").write_text(json.dumps({"messages": messages, "log": log}, indent=1), encoding="utf-8")
 
 
 def call_tool(c: dict, box: T.Sandbox, mcp: T.MCPClient) -> str:
@@ -405,6 +411,8 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--model", default="")
     ap.add_argument("--base-url", default="http://127.0.0.1:11434/v1")
     ap.add_argument("--temperature", type=float)
+    ap.add_argument("--max-tokens", type=int, default=4096, help="reply length cap per model call, thinking included")
+    ap.add_argument("--reasoning-effort", help="passed to the server as reasoning_effort (for example none or low)")
     ap.add_argument("--runs", type=int, default=10)
     ap.add_argument("--out", type=Path)
     ap.add_argument("--max-steps", type=int, default=400, help="tool calls per run")
@@ -420,7 +428,8 @@ def main(argv: list[str]) -> int:
     if args.mode == "plugin" and args.driver == "claude":
         ap.error("the claude driver runs the no-plugin baseline only")
     args.explain = args.explain and args.suite in ("M", "L") and args.driver != "reader"
-    driver_obj = drivers.make(args.driver, args.model, args.base_url, args.temperature)
+    driver_obj = drivers.make(args.driver, args.model, args.base_url, args.temperature, args.max_tokens,
+                              args.reasoning_effort)
     stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
     label = (args.model or args.driver).replace("/", "_").replace(":", "_")
     out = (args.out or ROOT / "evals" / "results" / f"{stamp}-{args.suite}-{args.mode}-{label}").resolve()
@@ -429,7 +438,8 @@ def main(argv: list[str]) -> int:
     meta = {"suite": args.suite, "card": args.card, "mode": args.mode, "driver": args.driver, "model": args.model,
             "runs": args.runs, "cases": [f.name for f in folders], "date": dt.date.today().isoformat(),
             "host": platform.node(), "hardware": args.hardware, "commit": git_head(),
-            "strace": T.strace_path() if not args.no_trace else None}
+            "strace": T.strace_path() if not args.no_trace else None, "max_tokens": args.max_tokens,
+            "reasoning_effort": args.reasoning_effort}
     (out / "meta.json").write_text(json.dumps(meta, indent=1), encoding="utf-8")
     records = out / "records.jsonl"
     print(f"{len(folders)} cases x {args.runs} runs -> {out}", flush=True)

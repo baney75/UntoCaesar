@@ -43,9 +43,9 @@ class OpenAIDriver:
     name = "openai"
 
     def __init__(self, model: str, base_url: str, temperature: float | None = None, timeout: int = 900,
-                 api_key: str | None = None):
+                 api_key: str | None = None, max_tokens: int | None = None, reasoning_effort: str | None = None):
         self.model, self.base, self.temperature, self.timeout = model, base_url.rstrip("/"), temperature, timeout
-        self.api_key = api_key
+        self.api_key, self.max_tokens, self.reasoning_effort = api_key, max_tokens, reasoning_effort
 
     def post(self, body: dict) -> dict:
         req = urllib.request.Request(f"{self.base}/chat/completions", data=json.dumps(body).encode(),
@@ -66,6 +66,10 @@ class OpenAIDriver:
             body["tools"] = tools
         if self.temperature is not None:
             body["temperature"] = self.temperature
+        if self.max_tokens:
+            body["max_tokens"] = self.max_tokens
+        if self.reasoning_effort:
+            body["reasoning_effort"] = self.reasoning_effort
         msg = self.post(body)["choices"][0]["message"]
         calls = []
         for i, c in enumerate(msg.get("tool_calls") or []):
@@ -237,9 +241,10 @@ class ReaderDriver:
         return self.call("bash", command=HOLE.sub(lambda m: next(texts), template))
 
 
-def make(kind: str, model: str = "", base_url: str = "", temperature: float | None = None):
+def make(kind: str, model: str = "", base_url: str = "", temperature: float | None = None,
+         max_tokens: int | None = None, reasoning_effort: str | None = None):
     if kind == "openai":
-        return OpenAIDriver(model, base_url, temperature)
+        return OpenAIDriver(model, base_url, temperature, max_tokens=max_tokens, reasoning_effort=reasoning_effort)
     if kind == "claude":
         return ClaudeDriver(model or None)
     if kind == "reader":
