@@ -33,7 +33,7 @@ And in the next message:
 ### 3. An MCP server for Grok Bot
 
 - Unto Caesar has an MCP server so Grok Bot, and any assistant that speaks MCP, can act through it. Sending tax data to a cloud assistant is the person's own explicit choice, the same as using their subscription; the local path never needs it.
-- Reaching it from away from home follows Local Studio's tunnel rule ([local-studio docs/tunnel.md](https://github.com/baney75/local-studio/blob/main/docs/tunnel.md)): hosted tunnels are waitlist-only, because running them costs money and Donovan will either charge for them or negotiate with the provider. Anyone on the dev channel can use their own tunnel today (their own Cloudflare account or Tailscale).
+- Reaching it from away from home follows Local Studio's tunnel rule ([local-studio docs/tunnel.md](https://github.com/baney75/local-studio/blob/main/docs/tunnel.md)): there is no hosted tunnel and no waitlist (Donovan, 2026-11-24). Everyone sets up a tunnel on their own free Cloudflare account and domain, and `local-studio tunnel byo` walks them through it; Tailscale stays the option without a domain. This replaces the earlier waitlist rule quoted above.
 - A server reached through a tunnel needs auth on every path and the public-tools consent ([local-studio#13](https://github.com/baney75/local-studio/issues/13)).
 
 ### 4. A high standard
